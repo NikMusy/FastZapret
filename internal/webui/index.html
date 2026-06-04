@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>FastZapret — DPI Bypass</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #0a0e1a;
+  --panel: #131826;
+  --panel2: #1a1f30;
+  --accent: #7c5cff;
+  --accent2: #4cc7ff;
+  --green: #00d97e;
+  --red: #ff4757;
+  --text: #e6e9f2;
+  --muted: #7a83a0;
+  --border: #232a40;
+}
+html, body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; min-height: 100vh; }
+body { background: radial-gradient(circle at 20% 0%, rgba(124,92,255,.15), transparent 50%), radial-gradient(circle at 80% 100%, rgba(76,199,255,.1), transparent 50%), var(--bg); }
+.wrap { max-width: 1100px; margin: 0 auto; padding: 32px 24px; }
+header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 28px; }
+.logo { display: flex; align-items: center; gap: 12px; font-weight: 700; font-size: 22px; }
+.logo .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--green); box-shadow: 0 0 12px var(--green); animation: pulse 2s infinite; }
+.logo .dot.off { background: var(--red); box-shadow: 0 0 12px var(--red); }
+@keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .5; } }
+.badge { background: var(--panel2); border: 1px solid var(--border); padding: 4px 10px; border-radius: 12px; font-size: 12px; color: var(--muted); }
+.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+.card { background: var(--panel); border: 1px solid var(--border); border-radius: 16px; padding: 22px; }
+.card h2 { font-size: 13px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .8px; margin-bottom: 14px; }
+.big-toggle { display: flex; align-items: center; gap: 18px; }
+.power { width: 76px; height: 76px; border-radius: 50%; background: var(--panel2); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all .25s; position: relative; }
+.power:hover { transform: scale(1.05); }
+.power.on { background: linear-gradient(135deg, var(--accent), var(--accent2)); box-shadow: 0 0 32px rgba(124,92,255,.6); border-color: transparent; }
+.power svg { width: 32px; height: 32px; }
+.status-label { font-size: 22px; font-weight: 600; }
+.status-sub { color: var(--muted); font-size: 13px; margin-top: 4px; }
+.stat-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+.stat { background: var(--panel2); border-radius: 12px; padding: 14px; }
+.stat .num { font-size: 22px; font-weight: 700; }
+.stat .lbl { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .6px; margin-top: 4px; }
+.stat.mod .num { color: var(--accent); }
+.stat.err .num { color: var(--red); }
+.services { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+.service { display: flex; align-items: center; justify-content: space-between; background: var(--panel2); padding: 12px 14px; border-radius: 10px; cursor: pointer; user-select: none; }
+.service:hover { background: #20263c; }
+.service .name { display: flex; align-items: center; gap: 10px; font-weight: 600; }
+.service .ico { width: 28px; height: 28px; border-radius: 7px; display: flex; align-items: center; justify-content: center; font-weight: 700; color: white; font-size: 13px; }
+.ico.yt { background: #ff0000; }
+.ico.dc { background: #5865f2; }
+.ico.tg { background: #2aabee; }
+.ico.rb { background: #ed1b24; }
+.switch { width: 38px; height: 22px; background: #2a3148; border-radius: 11px; position: relative; transition: .2s; }
+.switch::after { content: ''; position: absolute; width: 16px; height: 16px; border-radius: 50%; background: white; top: 3px; left: 3px; transition: .2s; }
+.service.active .switch { background: var(--accent); }
+.service.active .switch::after { left: 19px; }
+.tune-row { display: flex; gap: 8px; }
+.tune-row button { flex: 1; background: var(--panel2); border: 1px solid var(--border); color: var(--text); padding: 12px 8px; border-radius: 10px; font-size: 13px; font-weight: 600; cursor: pointer; transition: .15s; }
+.tune-row button:hover { background: #20263c; }
+.tune-row button.active { background: linear-gradient(135deg, var(--accent), var(--accent2)); border-color: transparent; }
+.logs { background: var(--panel2); border-radius: 10px; padding: 12px; height: 220px; overflow-y: auto; font-family: 'Cascadia Code', 'JetBrains Mono', Consolas, monospace; font-size: 12px; line-height: 1.55; color: var(--muted); }
+.logs div { padding: 2px 0; border-bottom: 1px dashed #1f2540; }
+footer { text-align: center; color: var(--muted); font-size: 12px; margin-top: 28px; }
+footer a { color: var(--accent2); text-decoration: none; }
+.btn { background: var(--panel2); border: 1px solid var(--border); color: var(--text); padding: 8px 14px; border-radius: 8px; cursor: pointer; font-size: 13px; }
+.btn:hover { background: #20263c; }
+.btn.primary { background: linear-gradient(135deg, var(--accent), var(--accent2)); border: none; font-weight: 600; }
+.row-actions { display: flex; gap: 8px; margin-top: 14px; }
+.spark { width: 100%; height: 60px; margin-top: 12px; }
+@media (max-width: 760px) { .grid { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="logo"><span class="dot" id="dot"></span> FastZapret</div>
+    <div class="badge" id="ver">v1.0.0</div>
+  </header>
+
+  <div class="grid">
+    <div class="card">
+      <h2>Состояние</h2>
+      <div class="big-toggle">
+        <div class="power on" id="power" title="Вкл/Выкл">
+          <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18.36 6.64A9 9 0 1 1 5.64 6.64"/><line x1="12" y1="2" x2="12" y2="12"/></svg>
+        </div>
+        <div>
+          <div class="status-label" id="status">Защита активна</div>
+          <div class="status-sub" id="uptime">время работы: —</div>
+        </div>
+      </div>
+      <div class="row-actions">
+        <button class="btn" id="btn-restart">Перезапуск</button>
+        <button class="btn" id="btn-stop">Остановить</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Производительность</h2>
+      <div class="stat-row">
+        <div class="stat"><div class="num" id="rx">0</div><div class="lbl">RX</div></div>
+        <div class="stat"><div class="num" id="tx">0</div><div class="lbl">TX</div></div>
+        <div class="stat mod"><div class="num" id="mod">0</div><div class="lbl">обход</div></div>
+        <div class="stat err"><div class="num" id="err">0</div><div class="lbl">ошибки</div></div>
+      </div>
+      <canvas class="spark" id="spark"></canvas>
+    </div>
+  </div>
+
+  <div class="grid">
+    <div class="card">
+      <h2>Сервисы</h2>
+      <div class="services">
+        <div class="service" data-svc="YouTube"><div class="name"><span class="ico yt">YT</span> YouTube</div><div class="switch"></div></div>
+        <div class="service" data-svc="Discord"><div class="name"><span class="ico dc">DC</span> Discord</div><div class="switch"></div></div>
+        <div class="service" data-svc="Telegram"><div class="name"><span class="ico tg">TG</span> Telegram</div><div class="switch"></div></div>
+        <div class="service" data-svc="Roblox"><div class="name"><span class="ico rb">RB</span> Roblox</div><div class="switch"></div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Режим обхода</h2>
+      <div class="tune-row">
+        <button data-tune="fast">Быстрый</button>
+        <button data-tune="balanced">Баланс</button>
+        <button data-tune="aggressive">Агрессивный</button>
+        <button data-tune="max">Максимум</button>
+      </div>
+      <div class="status-sub" style="margin-top:14px" id="tune-desc">balanced — оптимально по скорости и надёжности</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>События</h2>
+    <div class="logs" id="logs"></div>
+  </div>
+
+  <footer>FastZapret © 2026 · <a href="https://github.com/NikMusy/FastZapret" target="_blank">GitHub</a></footer>
+</div>
+
+<script>
+const TUNE_DESC = {
+  fast: 'fast — минимальные накладные расходы, split2 для ClientHello',
+  balanced: 'balanced — fake + split, оптимально для большинства сетей',
+  aggressive: 'aggressive — fake + disorder, против продвинутых DPI',
+  max: 'max — multi-fake + bad-checksum + disorder. Сильнее обычного zapret.'
+};
+
+let state = null;
+const sparkData = new Array(60).fill(0);
+
+async function fetchState() {
+  try {
+    const r = await fetch('/api/state');
+    state = await r.json();
+    render();
+  } catch (e) {}
+}
+function render() {
+  if (!state) return;
+  document.getElementById('ver').textContent = 'v' + state.version;
+  document.getElementById('rx').textContent = fmt(state.stats.rx);
+  document.getElementById('tx').textContent = fmt(state.stats.tx);
+  document.getElementById('mod').textContent = fmt(state.stats.mod);
+  document.getElementById('err').textContent = fmt(state.stats.err);
+
+  const power = document.getElementById('power');
+  const dot = document.getElementById('dot');
+  if (state.running) {
+    power.classList.add('on');
+    dot.classList.remove('off');
+    document.getElementById('status').textContent = 'Защита активна';
+  } else {
+    power.classList.remove('on');
+    dot.classList.add('off');
+    document.getElementById('status').textContent = 'Остановлено';
+  }
+  const up = Math.max(0, Math.floor(Date.now()/1000 - state.started_at));
+  document.getElementById('uptime').textContent = 'время работы: ' + fmtTime(up);
+
+  document.querySelectorAll('.service').forEach(el => {
+    const svc = el.dataset.svc;
+    if (state.profile[svc]) el.classList.add('active');
+    else el.classList.remove('active');
+  });
+  document.querySelectorAll('.tune-row button').forEach(b => {
+    if (b.dataset.tune === state.profile.Tune) b.classList.add('active');
+    else b.classList.remove('active');
+  });
+  document.getElementById('tune-desc').textContent = TUNE_DESC[state.profile.Tune] || '';
+}
+
+function fmt(n) {
+  if (n < 1000) return n;
+  if (n < 1e6) return (n/1000).toFixed(1) + 'k';
+  return (n/1e6).toFixed(2) + 'M';
+}
+function fmtTime(s) {
+  const h = Math.floor(s/3600), m = Math.floor((s%3600)/60), sec = s%60;
+  return (h?h+'ч ':'') + (m?m+'м ':'') + sec + 'с';
+}
+
+async function postProfile() {
+  await fetch('/api/profile', { method: 'POST', body: JSON.stringify(state.profile) });
+}
+
+document.querySelectorAll('.service').forEach(el => {
+  el.addEventListener('click', () => {
+    if (!state) return;
+    const k = el.dataset.svc;
+    state.profile[k] = !state.profile[k];
+    postProfile(); render();
+  });
+});
+document.querySelectorAll('.tune-row button').forEach(b => {
+  b.addEventListener('click', () => {
+    if (!state) return;
+    state.profile.Tune = b.dataset.tune;
+    postProfile(); render();
+  });
+});
+document.getElementById('btn-restart').addEventListener('click', () => fetch('/api/restart', { method: 'POST' }));
+document.getElementById('btn-stop').addEventListener('click', () => fetch('/api/stop', { method: 'POST' }));
+
+async function loadLogs() {
+  const r = await fetch('/api/logs'); const arr = await r.json();
+  const el = document.getElementById('logs'); el.innerHTML = '';
+  arr.slice().reverse().forEach(l => { const d = document.createElement('div'); d.textContent = l; el.appendChild(d); });
+}
+setInterval(loadLogs, 2000); loadLogs();
+
+// SSE для realtime stats и графика
+const es = new EventSource('/api/stream');
+let prev = null;
+es.onmessage = e => {
+  const v = JSON.parse(e.data);
+  if (state) {
+    state.stats = v;
+    render();
+  }
+  if (prev) {
+    sparkData.push(Math.max(0, v.rx - prev.rx));
+    if (sparkData.length > 60) sparkData.shift();
+    drawSpark();
+  }
+  prev = v;
+};
+
+function drawSpark() {
+  const c = document.getElementById('spark');
+  const ctx = c.getContext('2d');
+  c.width = c.clientWidth * devicePixelRatio;
+  c.height = c.clientHeight * devicePixelRatio;
+  ctx.clearRect(0,0,c.width,c.height);
+  const max = Math.max(1, ...sparkData);
+  const step = c.width / sparkData.length;
+  const grad = ctx.createLinearGradient(0, 0, 0, c.height);
+  grad.addColorStop(0, 'rgba(124,92,255,0.6)');
+  grad.addColorStop(1, 'rgba(124,92,255,0)');
+  ctx.beginPath();
+  ctx.moveTo(0, c.height);
+  sparkData.forEach((v, i) => {
+    const x = i * step, y = c.height - (v / max) * c.height * 0.95;
+    ctx.lineTo(x, y);
+  });
+  ctx.lineTo(c.width, c.height);
+  ctx.closePath();
+  ctx.fillStyle = grad;
+  ctx.fill();
+  ctx.beginPath();
+  sparkData.forEach((v, i) => {
+    const x = i * step, y = c.height - (v / max) * c.height * 0.95;
+    if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+  });
+  ctx.strokeStyle = '#7c5cff';
+  ctx.lineWidth = 2 * devicePixelRatio;
+  ctx.stroke();
+}
+
+fetchState(); setInterval(fetchState, 5000);
+</script>
+</body>
+</html>

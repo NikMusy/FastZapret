@@ -1,0 +1,8 @@
+/fastzapret.exe
+/fastzapret-cli.exe
+/fastzapret-gui.exe
+/fastzapret_v2.exe
+/dist/
+*.log
+.vscode/
+.idea/
