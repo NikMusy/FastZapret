@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>FastZapret — высокоскоростной обход блокировок</title>
-<meta name="description" content="Аналог zapret-discord-youtube, только быстрее в разы. Discord, YouTube, Telegram, Roblox.">
+<title>FastZapret — обход блокировок для Windows</title>
+<meta name="description" content="Удобный лаунчер с веб-панелью поверх движка winws. Discord, YouTube, Telegram и онлайн Le Mans Ultimate.">
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 :root {
@@ -40,10 +40,6 @@ nav a:hover { color: var(--text); }
 .hero p.sub { font-size: 20px; color: var(--muted); max-width: 680px; margin: 0 auto 36px; line-height: 1.55; }
 .hero-buttons { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
 
-.preview { margin: 0 auto; max-width: 920px; padding: 0 12px; }
-.preview-frame { background: var(--panel); border: 1px solid var(--border); border-radius: 18px; padding: 8px; box-shadow: 0 40px 80px rgba(0,0,0,.5); }
-.preview-frame iframe { width: 100%; height: 720px; border-radius: 12px; border: 0; pointer-events: none; }
-
 .section { padding: 90px 0; }
 .section h2 { font-size: 38px; font-weight: 800; margin-bottom: 18px; letter-spacing: -.02em; }
 .section p.lead { color: var(--muted); font-size: 17px; margin-bottom: 50px; max-width: 620px; }
@@ -63,7 +59,6 @@ nav a:hover { color: var(--text); }
 .compare th.us { color: var(--accent2); }
 .compare tr:last-child td { border-bottom: none; }
 .compare td.good { color: var(--green); font-weight: 600; }
-.compare td.bad { color: var(--red); }
 
 .services-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
 .svc { background: var(--panel); border: 1px solid var(--border); border-radius: 16px; padding: 28px; text-align: center; transition: all .25s; }
@@ -72,7 +67,7 @@ nav a:hover { color: var(--text); }
 .svc.yt .badge-ico { background: #ff0000; }
 .svc.dc .badge-ico { background: #5865f2; }
 .svc.tg .badge-ico { background: #2aabee; }
-.svc.rb .badge-ico { background: #ed1b24; }
+.svc.lmu .badge-ico { background: linear-gradient(135deg,#e10600,#ffbf3f); color:#111; }
 .svc h3 { font-size: 16px; margin-bottom: 6px; }
 .svc p { color: var(--muted); font-size: 13px; }
 
@@ -81,6 +76,10 @@ nav a:hover { color: var(--text); }
 .step::before { counter-increment: step; content: counter(step); position: absolute; top: 22px; right: 26px; font-size: 48px; font-weight: 800; color: rgba(124,92,255,.18); line-height: 1; }
 .step h3 { font-size: 18px; font-weight: 700; margin-bottom: 8px; }
 .step p { color: var(--muted); font-size: 14px; line-height: 1.6; }
+.step code { background: var(--panel2); padding: 2px 6px; border-radius: 6px; font-size: 13px; }
+
+.note { background: var(--panel); border: 1px solid var(--border); border-left: 3px solid var(--accent2); border-radius: 12px; padding: 20px 24px; color: var(--muted); font-size: 15px; line-height: 1.6; margin-top: 26px; }
+.note b { color: var(--text); }
 
 footer { padding: 60px 0 40px; text-align: center; color: var(--muted); font-size: 13px; border-top: 1px solid var(--border); margin-top: 40px; }
 footer a { color: var(--accent2); text-decoration: none; }
@@ -100,105 +99,103 @@ footer a { color: var(--accent2); text-decoration: none; }
     <div class="logo"><span class="dot"></span> FastZapret</div>
     <div>
       <a href="#features">Возможности</a>
-      <a href="#compare">Сравнение</a>
+      <a href="#lmu">Le Mans</a>
       <a href="#install">Установка</a>
       <a href="https://github.com/NikMusy/FastZapret" target="_blank">GitHub</a>
     </div>
   </nav>
 
   <section class="hero">
-    <div class="tag">⚡ В 4–8× быстрее zapret-discord-youtube</div>
-    <h1>Обход блокировок<br><span class="grad">без тормозов и VPN</span></h1>
-    <p class="sub">FastZapret — параллельный DPI-обход для Windows. Discord, YouTube, Telegram, Roblox. Запустил — и забыл.</p>
+    <div class="tag">🏎️ Теперь и для Le Mans Ultimate</div>
+    <h1>Обход блокировок<br><span class="grad">без танцев с бубном</span></h1>
+    <p class="sub">FastZapret — удобный лаунчер с веб-панелью поверх проверенного движка <b>winws</b>. Discord, YouTube, Telegram и онлайн Le Mans Ultimate. Запустил — и работает.</p>
     <div class="hero-buttons">
       <a href="https://github.com/NikMusy/FastZapret/releases/latest" class="btn primary">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-        Скачать exe
+        Скачать
       </a>
       <a href="https://github.com/NikMusy/FastZapret" class="btn ghost">Исходники на GitHub</a>
     </div>
   </section>
 
   <section class="section" id="features">
-    <h2>Почему FastZapret быстрее?</h2>
-    <p class="lead">Архитектура переписана с нуля. Никаких узких мест в виде одного потока обработки пакетов.</p>
+    <h2>Что внутри</h2>
+    <p class="lead">Ядро обхода — <b>winws</b> из проекта bol-van/zapret, годами доведённый до ума. FastZapret делает его удобным.</p>
     <div class="features">
       <div class="feature">
-        <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></div>
-        <h3>N параллельных хэндлов</h3>
-        <p>WinDivert открывается по числу ядер CPU. У zapret — один поток. Результат: ×8 пропускной способности на 8-ядернике.</p>
-      </div>
-      <div class="feature">
-        <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><polyline points="13 17 18 12 13 7"/><polyline points="6 17 11 12 6 7"/></svg></div>
-        <h3>Batched I/O</h3>
-        <p>RecvEx / SendEx читают и отправляют до 64 пакетов за один syscall. zapret делает по одному. Экономия ядра — в разы.</p>
-      </div>
-      <div class="feature">
-        <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div>
-        <h3>Zero-alloc разбор пакета</h3>
-        <p>Никаких структур и копий — только индексы в исходный буфер. GC не успевает проснуться.</p>
-      </div>
-      <div class="feature">
-        <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
-        <h3>Узкий фильтр в драйвере</h3>
-        <p>Нерелевантный трафик не покидает kernel-mode. Pass-through для не-TLS пакетов отдаёт их обратно без участия user-space.</p>
-      </div>
-      <div class="feature">
         <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="10"/></svg></div>
-        <h3>Свой пересчёт checksum</h3>
-        <p>Инлайновая реализация L4 checksum без вызовов в WinDivertHelper. Сэкономили один syscall на каждый пакет.</p>
+        <h3>Проверенный движок</h3>
+        <p>Под капотом — winws и стратегии из проекта Flowseal. То, что реально работает у тысяч людей, а не самоделка.</p>
+      </div>
+      <div class="feature">
+        <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/></svg></div>
+        <h3>Веб-панель</h3>
+        <p>Локальная страница на 127.0.0.1:7890: включение, выбор стратегии, тумблер Le Mans Ultimate и логи движка.</p>
       </div>
       <div class="feature">
         <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></div>
-        <h3>Hostname-aware стратегии</h3>
-        <p>SNI распознаётся за наносекунды — под каждый сервис применяется своя оптимальная техника обхода.</p>
+        <h3>Профиль Le Mans Ultimate</h3>
+        <p>Отдельная мягкая стратегия под онлайн LMU (Cloudflare + Hetzner). Не ломает игровую сессию — не выкидывает в лобби.</p>
+      </div>
+      <div class="feature">
+        <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M4 4h16v4H4z"/><path d="M4 12h16v8H4z"/></svg></div>
+        <h3>Простые .bat</h3>
+        <p>Не любишь интерфейсы? Правый клик по <code>general.bat</code> или <code>Le Mans Ultimate.bat</code> → запуск от админа. Всё.</p>
+      </div>
+      <div class="feature">
+        <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M12 2v4M12 18v4M4.9 4.9l2.8 2.8M16.3 16.3l2.8 2.8M2 12h4M18 12h4"/></svg></div>
+        <h3>Несколько стратегий</h3>
+        <p>default / alt / alt2 / alt3. Не пробивает у твоего провайдера — переключил вариант в один клик.</p>
+      </div>
+      <div class="feature">
+        <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M3 12a9 9 0 1 0 18 0 9 9 0 0 0-18 0z"/><path d="M3 12h18"/><path d="M12 3a15 15 0 0 1 0 18a15 15 0 0 1 0-18z"/></svg></div>
+        <h3>Не VPN</h3>
+        <p>Трафик не шифруется и не гоняется через чужой сервер — только правится обход DPI. Быстро и без прокси.</p>
       </div>
     </div>
   </section>
 
   <section class="section" id="services">
     <h2>Что разблокирует</h2>
-    <p class="lead">Четыре сервиса из коробки. Каждый со своим оптимальным пайплайном.</p>
+    <p class="lead">Из коробки, на проверенных хостлистах.</p>
     <div class="services-grid">
       <div class="svc yt"><div class="badge-ico">YT</div><h3>YouTube</h3><p>HTTPS + QUIC. Видео без буферизации.</p></div>
-      <div class="svc dc"><div class="badge-ico">DC</div><h3>Discord</h3><p>Текст и голос. UDP-каналы тоже работают.</p></div>
-      <div class="svc tg"><div class="badge-ico">TG</div><h3>Telegram</h3><p>MTProto через 443. Без прокси.</p></div>
-      <div class="svc rb"><div class="badge-ico">RB</div><h3>Roblox</h3><p>HTTPS вход + UDP игровой трафик.</p></div>
+      <div class="svc dc"><div class="badge-ico">DC</div><h3>Discord</h3><p>Текст и голос. UDP-каналы тоже.</p></div>
+      <div class="svc tg"><div class="badge-ico">TG</div><h3>Telegram</h3><p>Через 443, без прокси.</p></div>
+      <div class="svc lmu"><div class="badge-ico">LMU</div><h3>Le Mans Ultimate</h3><p>Онлайн: лобби и гоночные сервера.</p></div>
     </div>
   </section>
 
-  <section class="section" id="compare">
-    <h2>FastZapret vs zapret</h2>
-    <p class="lead">Та же база (WinDivert), но другая архитектура.</p>
+  <section class="section" id="lmu">
+    <h2>Le Mans Ultimate</h2>
+    <p class="lead">Онлайн LMU в РФ ломается, потому что игра ходит в две разные сети. FastZapret обрабатывает обе.</p>
     <div class="compare">
       <table>
-        <thead><tr><th>Характеристика</th><th>zapret-discord-youtube</th><th class="us">FastZapret</th></tr></thead>
+        <thead><tr><th>Часть игры</th><th>Где хостится</th><th class="us">Что делает профиль LMU</th></tr></thead>
         <tbody>
-          <tr><td>Хэндлов WinDivert</td><td class="bad">1</td><td class="good">= число ядер CPU</td></tr>
-          <tr><td>Пакетов за syscall</td><td class="bad">1</td><td class="good">до 64 (RecvEx/SendEx)</td></tr>
-          <tr><td>Парсер</td><td>C, с аллокациями</td><td class="good">Go, zero-alloc</td></tr>
-          <tr><td>Checksum</td><td>через helper-syscall</td><td class="good">инлайн, ~30% быстрее</td></tr>
-          <tr><td>Pass-through fast-path</td><td class="bad">нет</td><td class="good">для не-TLS пакетов</td></tr>
-          <tr><td>Hostname-aware</td><td class="bad">нет</td><td class="good">SNI-based стратегия</td></tr>
-          <tr><td>Веб-UI с live-stats</td><td class="bad">нет</td><td class="good">встроенный на 127.0.0.1</td></tr>
-          <tr><td>Установка как сервис</td><td>через .bat скрипт</td><td class="good">встроено</td></tr>
+          <tr><td>API / логин / лобби</td><td>Cloudflare</td><td class="good">обычный TLS-desync — пробивает надёжно</td></tr>
+          <tr><td>гоночные сервера</td><td>Hetzner</td><td class="good">мягкий desync по первым пакетам</td></tr>
+          <tr><td>игровая сессия</td><td>—</td><td class="good">не трогается (cutoff) → не кикает</td></tr>
         </tbody>
       </table>
+    </div>
+    <div class="note">
+      ⚠️ <b>Честно:</b> часть серверов на Hetzner провайдеры режут жёстче, чем берёт чистый DPI-обход. Если после включения профиля какие-то сервера всё равно не пускают — запустите вместе с FastZapret бесплатный <a href="https://1.1.1.1/" target="_blank">Cloudflare WARP</a>.
     </div>
   </section>
 
   <section class="section" id="install">
     <h2>Установка за 30 секунд</h2>
-    <p class="lead">Никаких .NET и Visual C++ Redistributable. Только exe и драйвер.</p>
+    <p class="lead">Ни .NET, ни VPN, ни настроек.</p>
     <div class="steps">
-      <div class="step"><h3>Скачать</h3><p>Жми кнопку "Скачать exe" сверху. Архив 7 МБ.</p></div>
-      <div class="step"><h3>Распаковать</h3><p>В любую папку. Запустить <code>fastzapret-gui.exe</code> от имени Администратора.</p></div>
-      <div class="step"><h3>Готово</h3><p>Откроется веб-панель. Discord, YouTube, Telegram и Roblox уже работают.</p></div>
+      <div class="step"><h3>Скачать</h3><p>Кнопка «Скачать» сверху, либо <b>Code → Download ZIP</b> на GitHub. Распаковать в любую папку.</p></div>
+      <div class="step"><h3>Запустить от админа</h3><p>Правый клик по <code>general.bat</code> (или <code>Le Mans Ultimate.bat</code>) → «Запуск от имени администратора». Или <code>fastzapret-gui.exe</code> для панели.</p></div>
+      <div class="step"><h3>Играть</h3><p>Окно оставить открытым. Discord, YouTube и онлайн LMU уже работают.</p></div>
     </div>
   </section>
 
   <footer>
-    FastZapret © 2026 · MIT License · <a href="https://github.com/NikMusy/FastZapret">GitHub</a> · <a href="https://github.com/NikMusy/FastZapret/issues">Сообщить об ошибке</a>
+    FastZapret · MIT · движок <a href="https://github.com/bol-van/zapret" target="_blank">winws</a> · стратегии <a href="https://github.com/Flowseal/zapret-discord-youtube" target="_blank">Flowseal</a> · <a href="https://github.com/NikMusy/FastZapret">GitHub</a> · <a href="https://github.com/NikMusy/FastZapret/issues">Ошибки</a>
   </footer>
 </div>
 </body>

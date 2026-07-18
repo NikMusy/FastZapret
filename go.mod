@@ -1,3 +1,3 @@
-module github.com/phantom/fastzapret
+module github.com/NikMusy/FastZapret
 
 go 1.22

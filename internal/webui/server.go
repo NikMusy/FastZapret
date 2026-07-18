@@ -6,17 +6,13 @@ import (
 	"context"
 	_ "embed"
 	"encoding/json"
-	"fmt"
 	"net"
 	"net/http"
 	"os/exec"
 	"runtime"
-	"sync"
-	"sync/atomic"
-	"time"
 
-	"github.com/phantom/fastzapret/internal/divert"
-	"github.com/phantom/fastzapret/internal/services"
+	"github.com/NikMusy/FastZapret/internal/engine"
+	"github.com/NikMusy/FastZapret/internal/winws"
 )
 
 //go:embed index.html
@@ -24,21 +20,21 @@ var indexHTML []byte
 
 // Engine — абстракция движка для управления через UI.
 type Engine interface {
-	Profile() services.Profile
-	SetProfile(p services.Profile) error
-	Stats() divert.Stats
+	Profile() winws.Profile
+	SetProfile(p winws.Profile) error
+	Status() engine.Status
 	Running() bool
-	Restart() error
+	Start() error
 	Stop() error
+	Restart() error
+	Logs() []string
+	LastCommand() string
 }
 
 // Server обслуживает локальный UI.
 type Server struct {
-	eng    Engine
-	addr   string
-	mu     sync.Mutex
-	logs   []string // последние N событий
-	logCap int
+	eng  Engine
+	addr string
 }
 
 // New создаёт сервер UI.
@@ -46,17 +42,7 @@ func New(eng Engine, addr string) *Server {
 	if addr == "" {
 		addr = "127.0.0.1:7890"
 	}
-	return &Server{eng: eng, addr: addr, logCap: 200}
-}
-
-// AppendLog — добавить событие.
-func (s *Server) AppendLog(line string) {
-	s.mu.Lock()
-	if len(s.logs) >= s.logCap {
-		s.logs = s.logs[len(s.logs)-s.logCap+1:]
-	}
-	s.logs = append(s.logs, time.Now().Format("15:04:05 ")+line)
-	s.mu.Unlock()
+	return &Server{eng: eng, addr: addr}
 }
 
 // Serve запускает сервер. Возвращает фактический адрес.
@@ -72,9 +58,9 @@ func (s *Server) Serve(ctx context.Context) (string, error) {
 	})
 	mux.HandleFunc("/api/state", s.handleState)
 	mux.HandleFunc("/api/profile", s.handleProfile)
+	mux.HandleFunc("/api/start", s.handleStart)
 	mux.HandleFunc("/api/stop", s.handleStop)
 	mux.HandleFunc("/api/restart", s.handleRestart)
-	mux.HandleFunc("/api/stream", s.handleStream)
 	mux.HandleFunc("/api/logs", s.handleLogs)
 
 	ln, err := net.Listen("tcp", s.addr)
@@ -87,9 +73,7 @@ func (s *Server) Serve(ctx context.Context) (string, error) {
 		_ = srv.Shutdown(context.Background())
 		_ = ln.Close()
 	}()
-	go func() {
-		_ = srv.Serve(ln)
-	}()
+	go func() { _ = srv.Serve(ln) }()
 	return ln.Addr().String(), nil
 }
 
@@ -98,43 +82,25 @@ func OpenInBrowser(url string) {
 	if runtime.GOOS != "windows" {
 		return
 	}
-	// rundll32 url.dll,FileProtocolHandler — самый надёжный способ на Windows.
 	_ = exec.Command("rundll32", "url.dll,FileProtocolHandler", url).Start()
 }
 
 type stateResp struct {
-	Running   bool             `json:"running"`
-	Profile   services.Profile `json:"profile"`
-	Stats     statsView        `json:"stats"`
-	Version   string           `json:"version"`
-	StartedAt int64            `json:"started_at"`
+	Status      engine.Status `json:"status"`
+	Strategies  []string      `json:"strategies"`
+	LastCommand string        `json:"last_command"`
+	Version     string        `json:"version"`
 }
 
-type statsView struct {
-	RX  uint64 `json:"rx"`
-	TX  uint64 `json:"tx"`
-	Mod uint64 `json:"mod"`
-	Err uint64 `json:"err"`
-}
-
-var startedAt = time.Now().Unix()
-var version = "1.0.0"
+var version = "2.0.0"
 
 func (s *Server) handleState(w http.ResponseWriter, _ *http.Request) {
-	st := s.eng.Stats()
-	resp := stateResp{
-		Running: s.eng.Running(),
-		Profile: s.eng.Profile(),
-		Stats: statsView{
-			RX:  atomic.LoadUint64(&st.RxPackets),
-			TX:  atomic.LoadUint64(&st.TxPackets),
-			Mod: atomic.LoadUint64(&st.Modified),
-			Err: atomic.LoadUint64(&st.Errors),
-		},
-		Version:   version,
-		StartedAt: startedAt,
-	}
-	writeJSON(w, resp)
+	writeJSON(w, stateResp{
+		Status:      s.eng.Status(),
+		Strategies:  winws.Strategies,
+		LastCommand: s.eng.LastCommand(),
+		Version:     version,
+	})
 }
 
 func (s *Server) handleProfile(w http.ResponseWriter, r *http.Request) {
@@ -142,16 +108,30 @@ func (s *Server) handleProfile(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "POST only", http.StatusMethodNotAllowed)
 		return
 	}
-	var p services.Profile
+	var p winws.Profile
 	if err := json.NewDecoder(r.Body).Decode(&p); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
+	}
+	if p.Strategy == "" {
+		p.Strategy = "default"
 	}
 	if err := s.eng.SetProfile(p); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	s.AppendLog(fmt.Sprintf("профиль обновлён: tune=%s", p.Tune))
+	writeJSON(w, map[string]any{"ok": true})
+}
+
+func (s *Server) handleStart(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "POST only", http.StatusMethodNotAllowed)
+		return
+	}
+	if err := s.eng.Start(); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 	writeJSON(w, map[string]any{"ok": true})
 }
 
@@ -161,7 +141,6 @@ func (s *Server) handleStop(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	_ = s.eng.Stop()
-	s.AppendLog("остановлено")
 	writeJSON(w, map[string]any{"ok": true})
 }
 
@@ -174,45 +153,11 @@ func (s *Server) handleRestart(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	s.AppendLog("перезапущено")
 	writeJSON(w, map[string]any{"ok": true})
 }
 
 func (s *Server) handleLogs(w http.ResponseWriter, _ *http.Request) {
-	s.mu.Lock()
-	cp := append([]string(nil), s.logs...)
-	s.mu.Unlock()
-	writeJSON(w, cp)
-}
-
-// handleStream — Server-Sent Events: каждую секунду шлём свежие stats.
-func (s *Server) handleStream(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "text/event-stream")
-	w.Header().Set("Cache-Control", "no-cache")
-	w.Header().Set("Connection", "keep-alive")
-	fl, ok := w.(http.Flusher)
-	if !ok {
-		http.Error(w, "stream not supported", http.StatusInternalServerError)
-		return
-	}
-	tk := time.NewTicker(1 * time.Second)
-	defer tk.Stop()
-	for {
-		select {
-		case <-r.Context().Done():
-			return
-		case <-tk.C:
-			st := s.eng.Stats()
-			data, _ := json.Marshal(statsView{
-				RX:  atomic.LoadUint64(&st.RxPackets),
-				TX:  atomic.LoadUint64(&st.TxPackets),
-				Mod: atomic.LoadUint64(&st.Modified),
-				Err: atomic.LoadUint64(&st.Errors),
-			})
-			fmt.Fprintf(w, "data: %s\n\n", data)
-			fl.Flush()
-		}
-	}
+	writeJSON(w, s.eng.Logs())
 }
 
 func writeJSON(w http.ResponseWriter, v any) {

@@ -1,7 +1,9 @@
-// FastZapret — высокоскоростной DPI-обход для Windows.
-// Параллельные WinDivert хэндлы (по числу ядер) + batched I/O + zero-alloc
-// разбор пакета. Цель — превзойти zapret по пропускной способности
-// при тех же DPI-обходных техниках.
+// FastZapret — удобный лаунчер и веб-панель для движка обхода DPI winws.exe
+// (bol-van/zapret). Наборы стратегий взяты из проекта Flowseal и дополнены
+// профилем под Le Mans Ultimate.
+//
+// Сам DPI обходит winws.exe; FastZapret собирает для него стратегии,
+// запускает/останавливает процесс и даёт локальный веб-UI.
 package main
 
 import (
@@ -11,23 +13,22 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
-	"runtime"
 	"syscall"
 	"time"
 
-	"github.com/phantom/fastzapret/internal/config"
-	"github.com/phantom/fastzapret/internal/engine"
-	"github.com/phantom/fastzapret/internal/services"
-	"github.com/phantom/fastzapret/internal/webui"
+	"github.com/NikMusy/FastZapret/internal/config"
+	"github.com/NikMusy/FastZapret/internal/engine"
+	"github.com/NikMusy/FastZapret/internal/webui"
 )
 
 var (
-	flagConfig = flag.String("config", "", "путь к INI-конфигу (опц.)")
-	flagTune   = flag.String("tune", "", "fast|balanced|aggressive|max (override)")
-	flagWorks  = flag.Int("workers", 0, "число воркеров (0 = NumCPU)")
-	flagUIAddr = flag.String("ui", "127.0.0.1:7890", "адрес локального веб-UI (пусто = отключить)")
-	flagOpen   = flag.Bool("open", true, "открыть UI в браузере при старте")
-	flagSilent = flag.Bool("silent", false, "не печатать stats в консоль")
+	flagConfig   = flag.String("config", "", "путь к INI-конфигу (опц.)")
+	flagStrategy = flag.String("strategy", "", "default|alt|alt2|alt3 (override)")
+	flagLeMans   = flag.Bool("lmu", false, "включить профиль Le Mans Ultimate")
+	flagUI       = flag.String("ui", "", "адрес веб-UI (пусто = как в конфиге)")
+	flagNoOpen   = flag.Bool("no-open", false, "не открывать браузер")
+	flagPrint    = flag.Bool("print", false, "показать командную строку winws и выйти (ничего не запускает)")
+	flagNoStart  = flag.Bool("no-start", false, "не запускать движок автоматически")
 )
 
 func main() {
@@ -42,38 +43,51 @@ func main() {
 		}
 		cfg = c
 	}
-	if *flagTune != "" {
-		cfg.Profile.Tune = *flagTune
+	if *flagStrategy != "" {
+		cfg.Strategy = *flagStrategy
 	}
-	if *flagWorks > 0 {
-		cfg.Workers = *flagWorks
+	if *flagLeMans {
+		cfg.LeMans = true
 	}
-	if cfg.Workers == 0 {
-		cfg.Workers = runtime.NumCPU()
+	if *flagUI != "" {
+		cfg.UIAddr = *flagUI
+	}
+	if *flagNoOpen {
+		cfg.OpenUI = false
+	}
+	if *flagNoStart {
+		cfg.Autostart = false
 	}
 
 	exe, _ := os.Executable()
-	dir := filepath.Dir(exe)
-	if cfg.WinDivertDir == "" || cfg.WinDivertDir == "." {
-		bin := filepath.Join(dir, "bin")
-		if _, err := os.Stat(filepath.Join(bin, "WinDivert.dll")); err == nil {
-			cfg.WinDivertDir = bin
-		} else {
-			cfg.WinDivertDir = dir
-		}
+	root := filepath.Dir(exe)
+	binDir := cfg.BinDir
+	if binDir == "" {
+		binDir = filepath.Join(root, "bin")
+	}
+	listsDir := cfg.ListsDir
+	if listsDir == "" {
+		listsDir = filepath.Join(root, "lists")
 	}
 
-	eng := engine.New(cfg.Profile, cfg.Workers, cfg.QueueLen, cfg.QueueTimeMs, cfg.WinDivertDir)
-	if err := eng.Start(); err != nil {
-		fmt.Fprintln(os.Stderr, "не удалось запустить движок:", err)
-		fmt.Fprintln(os.Stderr, "запустите от имени Администратора, проверьте", cfg.WinDivertDir)
+	eng := engine.New(cfg.Profile(), binDir, listsDir)
+
+	// --print: только показать команду winws, ничего не запуская.
+	if *flagPrint {
+		fmt.Println(eng.LastCommand())
+		return
+	}
+
+	// проверим, что движок на месте
+	if _, err := os.Stat(filepath.Join(binDir, "winws.exe")); err != nil {
+		fmt.Fprintln(os.Stderr, "не найден winws.exe в", binDir)
+		fmt.Fprintln(os.Stderr, "положите рядом папки bin\\ и lists\\")
 		os.Exit(1)
 	}
 
-	fmt.Println("FastZapret — DPI bypass")
-	fmt.Println("воркеров :", cfg.Workers)
-	fmt.Println("режим    :", cfg.Profile.Tune)
-	fmt.Println("сервисы  :", servicesList(cfg.Profile))
+	fmt.Println("FastZapret — лаунчер winws (DPI bypass)")
+	fmt.Println("стратегия :", cfg.Strategy)
+	fmt.Println("Le Mans   :", onoff(cfg.LeMans))
 
 	ctx, cancel := context.WithCancel(context.Background())
 	sig := make(chan os.Signal, 1)
@@ -84,66 +98,35 @@ func main() {
 		cancel()
 	}()
 
-	if *flagUIAddr != "" {
-		srv := webui.New(eng, *flagUIAddr)
-		srv.AppendLog("движок запущен")
+	if cfg.Autostart {
+		if err := eng.Start(); err != nil {
+			fmt.Fprintln(os.Stderr, "не удалось запустить движок:", err)
+			fmt.Fprintln(os.Stderr, "запустите от имени Администратора")
+		}
+	}
+
+	if cfg.UIAddr != "" {
+		srv := webui.New(eng, cfg.UIAddr)
 		addr, err := srv.Serve(ctx)
 		if err != nil {
-			fmt.Fprintln(os.Stderr, "UI: не удалось открыть", *flagUIAddr, ":", err)
+			fmt.Fprintln(os.Stderr, "UI: не удалось открыть", cfg.UIAddr, ":", err)
 		} else {
 			url := "http://" + addr + "/"
-			fmt.Println("веб-UI   :", url)
-			if *flagOpen {
+			fmt.Println("веб-UI    :", url)
+			if cfg.OpenUI {
 				time.Sleep(300 * time.Millisecond)
 				webui.OpenInBrowser(url)
 			}
 		}
 	}
 
-	if !*flagSilent {
-		go statsLoop(ctx, eng)
-	}
-
 	<-ctx.Done()
 	_ = eng.Stop()
-	st := eng.Stats()
-	fmt.Printf("итого: RX=%d TX=%d MOD=%d ERR=%d\n",
-		st.RxPackets, st.TxPackets, st.Modified, st.Errors)
 }
 
-func statsLoop(ctx context.Context, e *engine.Engine) {
-	t := time.NewTicker(5 * time.Second)
-	defer t.Stop()
-	var prevRx uint64
-	for {
-		select {
-		case <-ctx.Done():
-			return
-		case <-t.C:
-			s := e.Stats()
-			fmt.Printf("[stats] rx=%d (+%d) tx=%d mod=%d err=%d\n",
-				s.RxPackets, s.RxPackets-prevRx, s.TxPackets, s.Modified, s.Errors)
-			prevRx = s.RxPackets
-		}
+func onoff(b bool) string {
+	if b {
+		return "вкл"
 	}
-}
-
-func servicesList(p services.Profile) string {
-	out := ""
-	add := func(name string, on bool) {
-		if on {
-			if out != "" {
-				out += " "
-			}
-			out += name
-		}
-	}
-	add("discord", p.Discord)
-	add("youtube", p.YouTube)
-	add("telegram", p.Telegram)
-	add("roblox", p.Roblox)
-	if out == "" {
-		out = "<пусто>"
-	}
-	return out
+	return "выкл"
 }

@@ -2,6 +2,7 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>FastZapret — DPI Bypass</title>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -13,6 +14,7 @@
   --accent2: #4cc7ff;
   --green: #00d97e;
   --red: #ff4757;
+  --gold: #ffbf3f;
   --text: #e6e9f2;
   --muted: #7a83a0;
   --border: #232a40;
@@ -30,64 +32,59 @@ header { display: flex; align-items: center; justify-content: space-between; mar
 .card { background: var(--panel); border: 1px solid var(--border); border-radius: 16px; padding: 22px; }
 .card h2 { font-size: 13px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .8px; margin-bottom: 14px; }
 .big-toggle { display: flex; align-items: center; gap: 18px; }
-.power { width: 76px; height: 76px; border-radius: 50%; background: var(--panel2); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all .25s; position: relative; }
+.power { width: 76px; height: 76px; border-radius: 50%; background: var(--panel2); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all .25s; position: relative; flex: none; }
 .power:hover { transform: scale(1.05); }
 .power.on { background: linear-gradient(135deg, var(--accent), var(--accent2)); box-shadow: 0 0 32px rgba(124,92,255,.6); border-color: transparent; }
 .power svg { width: 32px; height: 32px; }
 .status-label { font-size: 22px; font-weight: 600; }
 .status-sub { color: var(--muted); font-size: 13px; margin-top: 4px; }
-.stat-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
-.stat { background: var(--panel2); border-radius: 12px; padding: 14px; }
-.stat .num { font-size: 22px; font-weight: 700; }
-.stat .lbl { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .6px; margin-top: 4px; }
-.stat.mod .num { color: var(--accent); }
-.stat.err .num { color: var(--red); }
-.services { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
-.service { display: flex; align-items: center; justify-content: space-between; background: var(--panel2); padding: 12px 14px; border-radius: 10px; cursor: pointer; user-select: none; }
-.service:hover { background: #20263c; }
-.service .name { display: flex; align-items: center; gap: 10px; font-weight: 600; }
-.service .ico { width: 28px; height: 28px; border-radius: 7px; display: flex; align-items: center; justify-content: center; font-weight: 700; color: white; font-size: 13px; }
-.ico.yt { background: #ff0000; }
-.ico.dc { background: #5865f2; }
-.ico.tg { background: #2aabee; }
-.ico.rb { background: #ed1b24; }
-.switch { width: 38px; height: 22px; background: #2a3148; border-radius: 11px; position: relative; transition: .2s; }
-.switch::after { content: ''; position: absolute; width: 16px; height: 16px; border-radius: 50%; background: white; top: 3px; left: 3px; transition: .2s; }
-.service.active .switch { background: var(--accent); }
-.service.active .switch::after { left: 19px; }
-.tune-row { display: flex; gap: 8px; }
-.tune-row button { flex: 1; background: var(--panel2); border: 1px solid var(--border); color: var(--text); padding: 12px 8px; border-radius: 10px; font-size: 13px; font-weight: 600; cursor: pointer; transition: .15s; }
+.kv { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+.kv .stat { background: var(--panel2); border-radius: 12px; padding: 14px; }
+.kv .num { font-size: 20px; font-weight: 700; }
+.kv .lbl { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .6px; margin-top: 4px; }
+.lmu-toggle { display: flex; align-items: center; justify-content: space-between; background: var(--panel2); padding: 16px 18px; border-radius: 12px; cursor: pointer; user-select: none; }
+.lmu-toggle:hover { background: #20263c; }
+.lmu-toggle .name { display: flex; align-items: center; gap: 12px; font-weight: 700; font-size: 15px; }
+.lmu-toggle .ico { width: 34px; height: 34px; border-radius: 8px; background: linear-gradient(135deg,#e10600,#ffbf3f); display:flex; align-items:center; justify-content:center; font-weight:800; color:#111; font-size:12px; }
+.switch { width: 46px; height: 26px; background: #2a3148; border-radius: 13px; position: relative; transition: .2s; flex: none; }
+.switch::after { content: ''; position: absolute; width: 20px; height: 20px; border-radius: 50%; background: white; top: 3px; left: 3px; transition: .2s; }
+.on-sw .switch { background: var(--green); }
+.on-sw .switch::after { left: 23px; }
+.tune-row { display: flex; gap: 8px; flex-wrap: wrap; }
+.tune-row button { flex: 1; min-width: 90px; background: var(--panel2); border: 1px solid var(--border); color: var(--text); padding: 12px 8px; border-radius: 10px; font-size: 13px; font-weight: 600; cursor: pointer; transition: .15s; }
 .tune-row button:hover { background: #20263c; }
 .tune-row button.active { background: linear-gradient(135deg, var(--accent), var(--accent2)); border-color: transparent; }
-.logs { background: var(--panel2); border-radius: 10px; padding: 12px; height: 220px; overflow-y: auto; font-family: 'Cascadia Code', 'JetBrains Mono', Consolas, monospace; font-size: 12px; line-height: 1.55; color: var(--muted); }
-.logs div { padding: 2px 0; border-bottom: 1px dashed #1f2540; }
+.logs { background: #0b0f1c; border-radius: 10px; padding: 12px; height: 240px; overflow-y: auto; font-family: 'Cascadia Code', 'JetBrains Mono', Consolas, monospace; font-size: 12px; line-height: 1.55; color: var(--muted); }
+.logs div { padding: 2px 0; border-bottom: 1px dashed #1f2540; white-space: pre-wrap; word-break: break-word; }
+.cmd { background: #0b0f1c; border-radius: 10px; padding: 12px; font-family: 'Cascadia Code', Consolas, monospace; font-size: 11.5px; color: var(--muted); overflow-x: auto; white-space: pre-wrap; word-break: break-all; max-height: 200px; overflow-y: auto; }
 footer { text-align: center; color: var(--muted); font-size: 12px; margin-top: 28px; }
 footer a { color: var(--accent2); text-decoration: none; }
 .btn { background: var(--panel2); border: 1px solid var(--border); color: var(--text); padding: 8px 14px; border-radius: 8px; cursor: pointer; font-size: 13px; }
 .btn:hover { background: #20263c; }
-.btn.primary { background: linear-gradient(135deg, var(--accent), var(--accent2)); border: none; font-weight: 600; }
 .row-actions { display: flex; gap: 8px; margin-top: 14px; }
-.spark { width: 100%; height: 60px; margin-top: 12px; }
-@media (max-width: 760px) { .grid { grid-template-columns: 1fr; } }
+.hint { color: var(--muted); font-size: 12.5px; line-height: 1.5; margin-top: 12px; }
+.hint b { color: var(--gold); }
+summary { cursor: pointer; color: var(--accent2); font-size: 13px; }
+@media (max-width: 760px) { .grid { grid-template-columns: 1fr; } .kv { grid-template-columns: 1fr 1fr; } }
 </style>
 </head>
 <body>
 <div class="wrap">
   <header>
     <div class="logo"><span class="dot" id="dot"></span> FastZapret</div>
-    <div class="badge" id="ver">v1.0.0</div>
+    <div class="badge" id="ver">v2.0.0</div>
   </header>
 
   <div class="grid">
     <div class="card">
       <h2>Состояние</h2>
       <div class="big-toggle">
-        <div class="power on" id="power" title="Вкл/Выкл">
+        <div class="power" id="power" title="Вкл/Выкл">
           <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18.36 6.64A9 9 0 1 1 5.64 6.64"/><line x1="12" y1="2" x2="12" y2="12"/></svg>
         </div>
         <div>
-          <div class="status-label" id="status">Защита активна</div>
-          <div class="status-sub" id="uptime">время работы: —</div>
+          <div class="status-label" id="status">—</div>
+          <div class="status-sub" id="substatus">нажми, чтобы включить</div>
         </div>
       </div>
       <div class="row-actions">
@@ -97,188 +94,149 @@ footer a { color: var(--accent2); text-decoration: none; }
     </div>
 
     <div class="card">
-      <h2>Производительность</h2>
-      <div class="stat-row">
-        <div class="stat"><div class="num" id="rx">0</div><div class="lbl">RX</div></div>
-        <div class="stat"><div class="num" id="tx">0</div><div class="lbl">TX</div></div>
-        <div class="stat mod"><div class="num" id="mod">0</div><div class="lbl">обход</div></div>
-        <div class="stat err"><div class="num" id="err">0</div><div class="lbl">ошибки</div></div>
+      <h2>Движок winws</h2>
+      <div class="kv">
+        <div class="stat"><div class="num" id="pid">—</div><div class="lbl">PID</div></div>
+        <div class="stat"><div class="num" id="uptime">—</div><div class="lbl">Аптайм</div></div>
+        <div class="stat"><div class="num" id="curstrat">—</div><div class="lbl">Стратегия</div></div>
       </div>
-      <canvas class="spark" id="spark"></canvas>
+      <div class="hint">Движок — проверенный <b>winws.exe</b> (bol-van/zapret). FastZapret собирает для него стратегии и управляет процессом.</div>
     </div>
   </div>
 
   <div class="grid">
     <div class="card">
-      <h2>Сервисы</h2>
-      <div class="services">
-        <div class="service" data-svc="YouTube"><div class="name"><span class="ico yt">YT</span> YouTube</div><div class="switch"></div></div>
-        <div class="service" data-svc="Discord"><div class="name"><span class="ico dc">DC</span> Discord</div><div class="switch"></div></div>
-        <div class="service" data-svc="Telegram"><div class="name"><span class="ico tg">TG</span> Telegram</div><div class="switch"></div></div>
-        <div class="service" data-svc="Roblox"><div class="name"><span class="ico rb">RB</span> Roblox</div><div class="switch"></div></div>
-      </div>
+      <h2>Стратегия обхода</h2>
+      <div class="tune-row" id="strats"></div>
+      <div class="hint" id="strat-desc">Если один вариант не пробивает твоего провайдера — переключи на следующий.</div>
     </div>
 
     <div class="card">
-      <h2>Режим обхода</h2>
-      <div class="tune-row">
-        <button data-tune="fast">Быстрый</button>
-        <button data-tune="balanced">Баланс</button>
-        <button data-tune="aggressive">Агрессивный</button>
-        <button data-tune="max">Максимум</button>
+      <h2>Игры</h2>
+      <div class="lmu-toggle" id="lmu">
+        <div class="name"><span class="ico">LMU</span> Le Mans Ultimate</div>
+        <div class="switch"></div>
       </div>
-      <div class="status-sub" style="margin-top:14px" id="tune-desc">balanced — оптимально по скорости и надёжности</div>
+      <div class="hint">Отдельный мягкий профиль под онлайн LMU (Cloudflare + Hetzner). Не ломает игровую сессию. Если часть серверов на Hetzner всё равно недоступна — включи <b>Cloudflare WARP</b> вместе с этим.</div>
     </div>
   </div>
 
-  <div class="card">
+  <div class="card" style="margin-bottom:20px">
     <h2>События</h2>
     <div class="logs" id="logs"></div>
   </div>
 
-  <footer>FastZapret © 2026 · <a href="https://github.com/NikMusy/FastZapret" target="_blank">GitHub</a></footer>
+  <div class="card">
+    <details>
+      <summary>Команда winws (что реально запускается)</summary>
+      <div class="cmd" id="cmd" style="margin-top:12px"></div>
+    </details>
+  </div>
+
+  <footer>FastZapret · движок <a href="https://github.com/bol-van/zapret" target="_blank">winws</a> · стратегии <a href="https://github.com/Flowseal/zapret-discord-youtube" target="_blank">Flowseal</a> · <a href="https://github.com/NikMusy/FastZapret" target="_blank">GitHub</a></footer>
 </div>
 
 <script>
-const TUNE_DESC = {
-  fast: 'fast — минимальные накладные расходы, split2 для ClientHello',
-  balanced: 'balanced — fake + split, оптимально для большинства сетей',
-  aggressive: 'aggressive — fake + disorder, против продвинутых DPI',
-  max: 'max — multi-fake + bad-checksum + disorder. Сильнее обычного zapret.'
+const STRAT_DESC = {
+  default: 'default — основной набор (Discord, YouTube, общий список). Как у Flowseal.',
+  alt: 'alt — другие параметры seqovl/repeats. Пробуй, если default не берёт.',
+  alt2: 'alt2 — split-позиция 2, больше повторов. Для упрямого DPI.',
+  alt3: 'alt3 — компромиссные параметры seqovl.'
 };
 
-let state = null;
-const sparkData = new Array(60).fill(0);
+let st = null;
+let prof = { strategy: 'default', lemans: false };
+let busy = false;
 
 async function fetchState() {
   try {
     const r = await fetch('/api/state');
-    state = await r.json();
+    st = await r.json();
+    prof.strategy = st.status.strategy || 'default';
+    prof.lemans = !!st.status.lemans;
     render();
   } catch (e) {}
 }
+
+function buildStrats() {
+  const box = document.getElementById('strats');
+  if (box.childElementCount || !st) return;
+  st.strategies.forEach(s => {
+    const b = document.createElement('button');
+    b.textContent = s;
+    b.dataset.s = s;
+    b.addEventListener('click', () => { prof.strategy = s; postProfile(); });
+    box.appendChild(b);
+  });
+}
+
 function render() {
-  if (!state) return;
-  document.getElementById('ver').textContent = 'v' + state.version;
-  document.getElementById('rx').textContent = fmt(state.stats.rx);
-  document.getElementById('tx').textContent = fmt(state.stats.tx);
-  document.getElementById('mod').textContent = fmt(state.stats.mod);
-  document.getElementById('err').textContent = fmt(state.stats.err);
+  if (!st) return;
+  buildStrats();
+  document.getElementById('ver').textContent = 'v' + st.version;
+  const running = st.status.running;
 
   const power = document.getElementById('power');
   const dot = document.getElementById('dot');
-  if (state.running) {
-    power.classList.add('on');
-    dot.classList.remove('off');
-    document.getElementById('status').textContent = 'Защита активна';
-  } else {
-    power.classList.remove('on');
-    dot.classList.add('off');
-    document.getElementById('status').textContent = 'Остановлено';
-  }
-  const up = Math.max(0, Math.floor(Date.now()/1000 - state.started_at));
-  document.getElementById('uptime').textContent = 'время работы: ' + fmtTime(up);
+  power.classList.toggle('on', running);
+  dot.classList.toggle('off', !running);
+  document.getElementById('status').textContent = running ? 'Защита активна' : 'Остановлено';
+  document.getElementById('substatus').textContent = running ? 'winws работает' : 'нажми, чтобы включить';
 
-  document.querySelectorAll('.service').forEach(el => {
-    const svc = el.dataset.svc;
-    if (state.profile[svc]) el.classList.add('active');
-    else el.classList.remove('active');
-  });
-  document.querySelectorAll('.tune-row button').forEach(b => {
-    if (b.dataset.tune === state.profile.Tune) b.classList.add('active');
-    else b.classList.remove('active');
-  });
-  document.getElementById('tune-desc').textContent = TUNE_DESC[state.profile.Tune] || '';
+  document.getElementById('pid').textContent = running ? st.status.pid : '—';
+  document.getElementById('uptime').textContent = running ? fmtTime(st.status.uptime_sec) : '—';
+  document.getElementById('curstrat').textContent = st.status.strategy || '—';
+
+  document.querySelectorAll('#strats button').forEach(b =>
+    b.classList.toggle('active', b.dataset.s === prof.strategy));
+  document.getElementById('strat-desc').textContent = STRAT_DESC[prof.strategy] || '';
+
+  document.getElementById('lmu').classList.toggle('on-sw', prof.lemans);
+  document.getElementById('cmd').textContent = st.last_command || '';
 }
 
-function fmt(n) {
-  if (n < 1000) return n;
-  if (n < 1e6) return (n/1000).toFixed(1) + 'k';
-  return (n/1e6).toFixed(2) + 'M';
-}
 function fmtTime(s) {
+  s = s || 0;
   const h = Math.floor(s/3600), m = Math.floor((s%3600)/60), sec = s%60;
   return (h?h+'ч ':'') + (m?m+'м ':'') + sec + 'с';
 }
 
 async function postProfile() {
-  await fetch('/api/profile', { method: 'POST', body: JSON.stringify(state.profile) });
+  if (busy) return;
+  busy = true;
+  document.getElementById('substatus').textContent = 'применяю…';
+  try {
+    await fetch('/api/profile', { method: 'POST', body: JSON.stringify(prof) });
+  } catch (e) {}
+  setTimeout(() => { busy = false; fetchState(); }, 700);
+  render();
 }
 
-document.querySelectorAll('.service').forEach(el => {
-  el.addEventListener('click', () => {
-    if (!state) return;
-    const k = el.dataset.svc;
-    state.profile[k] = !state.profile[k];
-    postProfile(); render();
-  });
+document.getElementById('power').addEventListener('click', async () => {
+  if (!st) return;
+  const url = st.status.running ? '/api/stop' : '/api/start';
+  await fetch(url, { method: 'POST' });
+  setTimeout(fetchState, 500);
 });
-document.querySelectorAll('.tune-row button').forEach(b => {
-  b.addEventListener('click', () => {
-    if (!state) return;
-    state.profile.Tune = b.dataset.tune;
-    postProfile(); render();
-  });
+document.getElementById('lmu').addEventListener('click', () => {
+  prof.lemans = !prof.lemans;
+  postProfile();
 });
-document.getElementById('btn-restart').addEventListener('click', () => fetch('/api/restart', { method: 'POST' }));
-document.getElementById('btn-stop').addEventListener('click', () => fetch('/api/stop', { method: 'POST' }));
+document.getElementById('btn-restart').addEventListener('click', async () => { await fetch('/api/restart', { method: 'POST' }); setTimeout(fetchState, 800); });
+document.getElementById('btn-stop').addEventListener('click', async () => { await fetch('/api/stop', { method: 'POST' }); setTimeout(fetchState, 400); });
 
 async function loadLogs() {
-  const r = await fetch('/api/logs'); const arr = await r.json();
-  const el = document.getElementById('logs'); el.innerHTML = '';
-  arr.slice().reverse().forEach(l => { const d = document.createElement('div'); d.textContent = l; el.appendChild(d); });
-}
-setInterval(loadLogs, 2000); loadLogs();
-
-// SSE для realtime stats и графика
-const es = new EventSource('/api/stream');
-let prev = null;
-es.onmessage = e => {
-  const v = JSON.parse(e.data);
-  if (state) {
-    state.stats = v;
-    render();
-  }
-  if (prev) {
-    sparkData.push(Math.max(0, v.rx - prev.rx));
-    if (sparkData.length > 60) sparkData.shift();
-    drawSpark();
-  }
-  prev = v;
-};
-
-function drawSpark() {
-  const c = document.getElementById('spark');
-  const ctx = c.getContext('2d');
-  c.width = c.clientWidth * devicePixelRatio;
-  c.height = c.clientHeight * devicePixelRatio;
-  ctx.clearRect(0,0,c.width,c.height);
-  const max = Math.max(1, ...sparkData);
-  const step = c.width / sparkData.length;
-  const grad = ctx.createLinearGradient(0, 0, 0, c.height);
-  grad.addColorStop(0, 'rgba(124,92,255,0.6)');
-  grad.addColorStop(1, 'rgba(124,92,255,0)');
-  ctx.beginPath();
-  ctx.moveTo(0, c.height);
-  sparkData.forEach((v, i) => {
-    const x = i * step, y = c.height - (v / max) * c.height * 0.95;
-    ctx.lineTo(x, y);
-  });
-  ctx.lineTo(c.width, c.height);
-  ctx.closePath();
-  ctx.fillStyle = grad;
-  ctx.fill();
-  ctx.beginPath();
-  sparkData.forEach((v, i) => {
-    const x = i * step, y = c.height - (v / max) * c.height * 0.95;
-    if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
-  });
-  ctx.strokeStyle = '#7c5cff';
-  ctx.lineWidth = 2 * devicePixelRatio;
-  ctx.stroke();
+  try {
+    const r = await fetch('/api/logs'); const arr = await r.json();
+    const el = document.getElementById('logs'); el.innerHTML = '';
+    (arr || []).slice().reverse().forEach(l => { const d = document.createElement('div'); d.textContent = l; el.appendChild(d); });
+  } catch (e) {}
 }
 
-fetchState(); setInterval(fetchState, 5000);
+fetchState();
+setInterval(fetchState, 3000);
+setInterval(loadLogs, 2000);
+loadLogs();
 </script>
 </body>
 </html>

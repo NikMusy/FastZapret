@@ -3,6 +3,7 @@
 /fastzapret-gui.exe
 /fastzapret_v2.exe
 /dist/
+/FastZapret-*.zip
 *.log
 .vscode/
 .idea/

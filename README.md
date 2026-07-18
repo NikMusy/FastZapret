@@ -1,78 +1,88 @@
 # FastZapret
 
-> Высокоскоростной DPI-обход для Windows. Аналог [zapret-discord-youtube](https://github.com/Flowseal/zapret-discord-youtube) — только **быстрее в разы** и со встроенным веб-интерфейсом.
+> Обход блокировок DPI для Windows: **Discord, YouTube, Telegram** и **Le Mans Ultimate** (онлайн).
+> Удобный лаунчер с веб-панелью поверх проверенного движка **winws** (`bol-van/zapret`), со стратегиями из проекта [Flowseal](https://github.com/Flowseal/zapret-discord-youtube).
 
-[**Скачать релиз**](https://github.com/NikMusy/FastZapret/releases/latest) · [**Сайт проекта**](https://nikmusy.github.io/FastZapret/) · [**Issues**](https://github.com/NikMusy/FastZapret/issues)
+[**Скачать релиз**](https://github.com/NikMusy/FastZapret/releases/latest) · [**Сайт**](https://nikmusy.github.io/FastZapret/) · [**Issues**](https://github.com/NikMusy/FastZapret/issues)
 
 ---
 
-## Что разблокирует
+## Что это
 
-| Сервис | Что включает |
-|---|---|
-| **Discord** | текст + голосовые каналы (UDP) |
-| **YouTube** | HTTPS + QUIC, видео без буферизации |
-| **Telegram** | MTProto через 443, без прокси |
-| **Roblox** | вход + игровой UDP-трафик |
+FastZapret **не изобретает** обход DPI заново — он запускает `winws.exe` (движок zapret, годами доведённый до ума) с готовым набором стратегий и добавляет:
 
-## Почему быстрее zapret
+- 🖥️ **веб-панель** на `127.0.0.1:7890` — вкл/выкл, выбор стратегии, логи;
+- 🏎️ **профиль Le Mans Ultimate** — чтобы онлайн игры работал и не выкидывал;
+- 🖱️ **простые `.bat`** — для тех, кому лишний интерфейс не нужен.
 
-| | zapret | **FastZapret** |
+> Более ранняя версия FastZapret пыталась реализовать DPI-обход сама (на Go через WinDivert). Это приводило к вылетам и не работало. Теперь ядро — `winws`, который просто работает.
+
+## Быстрый старт
+
+1. Скачайте [релиз](https://github.com/NikMusy/FastZapret/releases/latest) (или нажмите **Code → Download ZIP**) и распакуйте.
+2. **Правый клик по нужному файлу → «Запуск от имени администратора»:**
+   - `general.bat` — обычный обход (Discord, YouTube, общий список);
+   - `Le Mans Ultimate.bat` — то же **плюс** профиль LMU для онлайна.
+3. Оставьте открытым чёрное окно — пока оно открыто, обход работает.
+
+Либо запустите `fastzapret-gui.exe` (тоже от администратора) — откроется веб-панель, где всё переключается мышкой, в том числе тумблер **Le Mans Ultimate**.
+
+## Le Mans Ultimate
+
+Онлайн LMU в РФ ломается, потому что игра ходит в две сети:
+
+| Часть | Где | Что делает FastZapret |
 |---|---|---|
-| Хэндлов WinDivert | 1 | N = число ядер CPU |
-| Пакетов за syscall | 1 | до 64 (`RecvEx`/`SendEx`) |
-| Парсер | C, с аллокациями | Go, zero-alloc |
-| Checksum | через helper-syscall | свой инлайн (~30 % быстрее) |
-| Фильтр в драйвере | широкий | узкий — нерелевантное не покидает kernel |
-| Hostname-aware | нет | да, по SNI |
-| Веб-UI | нет | встроен на `127.0.0.1:7890` |
+| API / логин / лобби | **Cloudflare** | обычный TLS-desync — пробивает надёжно |
+| гоночные / выделенные сервера | **Hetzner** | мягкий desync только по первым пакетам соединения |
 
-## Запуск
+Профиль LMU специально **не трогает пакеты уже идущей сессии** (`--dpi-desync-cutoff`) — поэтому не «выкидывает в лобби после загрузки карты», как это бывало с агрессивным игровым фильтром.
 
-1. Скачайте [последний релиз](https://github.com/NikMusy/FastZapret/releases/latest), распакуйте.
-2. Запустите `fastzapret-gui.exe` от имени **Администратора**.
-3. Откроется веб-панель в браузере. Готово.
+⚠️ **Честно:** часть серверов на Hetzner провайдеры режут жёстче, чем может пробить чистый DPI-desync. Если после включения профиля какие-то сервера всё равно не пускают — запустите вместе с FastZapret **[Cloudflare WARP](https://1.1.1.1/)**. Обновить диапазоны серверов: `scripts\update_lmu_ipset.bat`.
 
-Либо как сервис автозапуска:
+## Стратегии
 
-```cmd
-scripts\install_service.bat
+Если у твоего провайдера `default` не пробивает — переключи вариант (в панели или флагом `-strategy`):
+
+- `default` — основной набор (как у Flowseal);
+- `alt`, `alt2`, `alt3` — другие параметры `seqovl`/`repeats`/`split-pos`.
+
+## Как это устроено
+
+```
+main.go            — флаги, запуск панели и движка
+internal/winws/    — сборка командной строки winws.exe из профиля (+группы LMU)
+internal/engine/   — запуск/остановка/лог процесса winws.exe
+internal/webui/    — веб-панель (HTML встроен в exe)
+internal/config/   — INI-конфиг
+bin/               — winws.exe, WinDivert, cygwin1.dll, fake-payload'ы
+lists/             — хостлисты и ipset (в т.ч. list-lmu.txt / ipset-lmu.txt)
 ```
 
-## Профили
-
-- `fast` — split2 (одна модификация на пакет, минимум накладных)
-- `balanced` — fake(TTL=4) + split (по умолчанию)
-- `aggressive` — fake + disorder + split (для жёстких DPI)
-- `max` — multi-fake + bad-checksum + disorder (когда ничего больше не помогает)
-
-Меняется в веб-UI или в `configs\default.ini`.
-
 ## Сборка из исходников
+
+Нужен Go 1.22+.
 
 ```cmd
 go build -ldflags="-s -w -H windowsgui" -o fastzapret-gui.exe .
 go build -ldflags="-s -w" -o fastzapret-cli.exe .
 ```
 
-Нужен Go 1.22+.
+Посмотреть, какая команда winws соберётся, ничего не запуская:
 
-## Архитектура
+```cmd
+fastzapret-cli.exe -print -lmu
+```
 
-```
-divert/        — WinDivert wrapper, N параллельных воркеров с batched I/O
-ipparse/       — zero-alloc IP/TCP/UDP/TLS парсер + checksum
-strategy/      — Op: TCPFake, TCPSplit, TCPMultiFake, TCPFakeBadChecksum, UDPFake
-services/      — per-сервис пайплайны + SNI matching
-engine/        — управление воркерами, hot-reload профиля
-webui/         — встроенный HTTP UI (HTML + SSE для real-time stats)
-config/        — INI-парсер без зависимостей
-```
+## Благодарности
+
+- [**bol-van/zapret**](https://github.com/bol-van/zapret) — движок `winws`, сердце всего обхода.
+- [**Flowseal/zapret-discord-youtube**](https://github.com/Flowseal/zapret-discord-youtube) — наборы стратегий, хостлисты и fake-payload'ы.
 
 ## Лицензия
 
-MIT (мой код) · LGPL/GPL (WinDivert)
+MIT (код FastZapret). Движок `winws`, `WinDivert` и стратегии — под лицензиями своих проектов.
 
 ## Дисклеймер
 
-Используйте в рамках законодательства вашей страны. Автор не несёт ответственности за способы применения.
+Инструмент для восстановления доступа к легальным сервисам. Используйте в рамках законодательства вашей страны. Автор не несёт ответственности за способы применения.

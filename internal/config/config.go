@@ -1,43 +1,47 @@
 // Package config — простой парсер INI-подобного формата (KEY=VALUE),
-// без зависимостей вне stdlib. Никаких TOML-либ, чтобы exe был лёгким.
+// без зависимостей вне stdlib.
 package config
 
 import (
 	"bufio"
 	"os"
-	"strconv"
 	"strings"
 
-	"github.com/phantom/fastzapret/internal/services"
+	"github.com/NikMusy/FastZapret/internal/winws"
 )
 
 // Config — все настройки приложения.
 type Config struct {
-	Workers      int               // 0 = runtime.NumCPU()
-	QueueLen     int               // WinDivert queue (по умолчанию 16384)
-	QueueTimeMs  int               // время в очереди (по умолчанию 2000)
-	WinDivertDir string            // путь к WinDivert.dll
-	Profile      services.Profile
+	Strategy  string // default | alt | alt2 | alt3 | fake_tls
+	LeMans    bool   // включить профиль Le Mans Ultimate
+	UIAddr    string // адрес веб-UI (пусто = отключить)
+	OpenUI    bool   // открывать браузер при старте
+	Autostart bool   // запускать движок сразу при старте приложения
+	BinDir    string // переопределение папки bin (пусто = авто)
+	ListsDir  string // переопределение папки lists (пусто = авто)
 }
 
 // Defaults — настройки по умолчанию.
 func Defaults() Config {
 	return Config{
-		Workers:      0,
-		QueueLen:     16384,
-		QueueTimeMs:  2000,
-		WinDivertDir: ".",
-		Profile: services.Profile{
-			Discord:  true,
-			YouTube:  true,
-			Telegram: true,
-			Roblox:   true,
-			Tune:     "balanced",
-		},
+		Strategy:  "default",
+		LeMans:    false,
+		UIAddr:    "127.0.0.1:7890",
+		OpenUI:    true,
+		Autostart: true,
 	}
 }
 
-// Load читает INI-файл и накладывает значения на defaults.
+// Profile строит winws.Profile из конфига.
+func (c Config) Profile() winws.Profile {
+	s := c.Strategy
+	if s == "" {
+		s = "default"
+	}
+	return winws.Profile{Strategy: s, LeMans: c.LeMans}
+}
+
+// Load читает INI-файл поверх defaults.
 func Load(path string) (Config, error) {
 	cfg := Defaults()
 	f, err := os.Open(path)
@@ -58,24 +62,20 @@ func Load(path string) (Config, error) {
 		key := strings.TrimSpace(strings.ToLower(line[:eq]))
 		val := strings.TrimSpace(line[eq+1:])
 		switch key {
-		case "workers":
-			cfg.Workers, _ = strconv.Atoi(val)
-		case "queue_len":
-			cfg.QueueLen, _ = strconv.Atoi(val)
-		case "queue_time_ms":
-			cfg.QueueTimeMs, _ = strconv.Atoi(val)
-		case "windivert_dir":
-			cfg.WinDivertDir = val
-		case "tune":
-			cfg.Profile.Tune = val
-		case "discord":
-			cfg.Profile.Discord = parseBool(val)
-		case "youtube":
-			cfg.Profile.YouTube = parseBool(val)
-		case "telegram":
-			cfg.Profile.Telegram = parseBool(val)
-		case "roblox":
-			cfg.Profile.Roblox = parseBool(val)
+		case "strategy":
+			cfg.Strategy = strings.ToLower(val)
+		case "lemans", "le_mans", "lmu":
+			cfg.LeMans = parseBool(val)
+		case "ui", "ui_addr":
+			cfg.UIAddr = val
+		case "open_ui", "open":
+			cfg.OpenUI = parseBool(val)
+		case "autostart":
+			cfg.Autostart = parseBool(val)
+		case "bin_dir":
+			cfg.BinDir = val
+		case "lists_dir":
+			cfg.ListsDir = val
 		}
 	}
 	return cfg, sc.Err()
