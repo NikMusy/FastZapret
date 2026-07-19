@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/NikMusy/FastZapret/internal/autostart"
+	"github.com/NikMusy/FastZapret/internal/autotune"
 	"github.com/NikMusy/FastZapret/internal/engine"
 	"github.com/NikMusy/FastZapret/internal/netcheck"
 	"github.com/NikMusy/FastZapret/internal/winws"
@@ -36,8 +37,9 @@ type Engine interface {
 
 // Server обслуживает локальный UI.
 type Server struct {
-	eng  Engine
-	addr string
+	eng   Engine
+	addr  string
+	tuner *autotune.Tuner
 }
 
 // New создаёт сервер UI.
@@ -45,7 +47,7 @@ func New(eng Engine, addr string) *Server {
 	if addr == "" {
 		addr = "127.0.0.1:7890"
 	}
-	return &Server{eng: eng, addr: addr}
+	return &Server{eng: eng, addr: addr, tuner: autotune.New(eng)}
 }
 
 // Serve запускает сервер. Возвращает фактический адрес.
@@ -67,6 +69,7 @@ func (s *Server) Serve(ctx context.Context) (string, error) {
 	mux.HandleFunc("/api/logs", s.handleLogs)
 	mux.HandleFunc("/api/check", s.handleCheck)
 	mux.HandleFunc("/api/autostart", s.handleAutostart)
+	mux.HandleFunc("/api/autoselect", s.handleAutoselect)
 
 	ln, err := net.Listen("tcp", s.addr)
 	if err != nil {
@@ -91,14 +94,15 @@ func OpenInBrowser(url string) {
 }
 
 type stateResp struct {
-	Status      engine.Status `json:"status"`
-	Strategies  []string      `json:"strategies"`
-	LastCommand string        `json:"last_command"`
-	Autostart   bool          `json:"autostart"`
-	Version     string        `json:"version"`
+	Status      engine.Status  `json:"status"`
+	Strategies  []string       `json:"strategies"`
+	LastCommand string         `json:"last_command"`
+	Autostart   bool           `json:"autostart"`
+	Autotune    autotune.State `json:"autotune"`
+	Version     string         `json:"version"`
 }
 
-var version = "2.3.0"
+var version = "2.4.0"
 
 func (s *Server) handleState(w http.ResponseWriter, _ *http.Request) {
 	writeJSON(w, stateResp{
@@ -106,8 +110,19 @@ func (s *Server) handleState(w http.ResponseWriter, _ *http.Request) {
 		Strategies:  winws.Strategies,
 		LastCommand: s.eng.LastCommand(),
 		Autostart:   autostart.IsEnabled(),
+		Autotune:    s.tuner.State(),
 		Version:     version,
 	})
+}
+
+// handleAutoselect запускает автоподбор стратегии.
+func (s *Server) handleAutoselect(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "POST only", http.StatusMethodNotAllowed)
+		return
+	}
+	s.tuner.Start()
+	writeJSON(w, map[string]any{"ok": true})
 }
 
 func (s *Server) handleAutostart(w http.ResponseWriter, r *http.Request) {
