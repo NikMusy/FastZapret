@@ -1,10 +1,11 @@
-// Package netcheck — быстрая проверка доступности сервисов (TLS-хендшейк на 443).
-// Показывает пользователю, работает ли обход: если хост открывается быстро —
-// связь есть, если таймаут — заблокировано/обход не сработал.
+// Package netcheck — быстрая проверка доступности сервисов.
+//
+// Меряем чистый TCP-connect (SYN → SYN/ACK) на 443 — это реальный RTT (≈пинг),
+// один round-trip, а не полный TLS-хендшейк. Берём лучшее из нескольких попыток,
+// чтобы убрать джиттер. Так цифры честные и маленькие.
 package netcheck
 
 import (
-	"crypto/tls"
 	"net"
 	"sync"
 	"time"
@@ -32,7 +33,9 @@ var DefaultTargets = []Target{
 	{"Le Mans Ultimate", "lemansultimate.com"},
 }
 
-// Check проверяет цели параллельно с общим таймаутом на каждую.
+const attempts = 3
+
+// Check проверяет цели параллельно.
 func Check(targets []Target, timeout time.Duration) []Result {
 	res := make([]Result, len(targets))
 	var wg sync.WaitGroup
@@ -49,18 +52,27 @@ func Check(targets []Target, timeout time.Duration) []Result {
 
 func checkOne(t Target, timeout time.Duration) Result {
 	r := Result{Name: t.Name, Host: t.Host}
-	start := time.Now()
-	d := net.Dialer{Timeout: timeout}
-	conn, err := tls.DialWithDialer(&d, "tcp", t.Host+":443", &tls.Config{
-		ServerName:         t.Host,
-		InsecureSkipVerify: true, // нас интересует только прохождение хендшейка
-	})
-	r.LatencyMs = time.Since(start).Milliseconds()
-	if err != nil {
-		r.Error = err.Error()
-		return r
+	best := time.Duration(1<<63 - 1)
+	addr := t.Host + ":443"
+	var lastErr error
+	for i := 0; i < attempts; i++ {
+		start := time.Now()
+		conn, err := net.DialTimeout("tcp", addr, timeout)
+		if err != nil {
+			lastErr = err
+			continue
+		}
+		d := time.Since(start)
+		_ = conn.Close()
+		if d < best {
+			best = d
+		}
+		r.OK = true
 	}
-	_ = conn.Close()
-	r.OK = true
+	if r.OK {
+		r.LatencyMs = best.Milliseconds()
+	} else if lastErr != nil {
+		r.Error = lastErr.Error()
+	}
 	return r
 }

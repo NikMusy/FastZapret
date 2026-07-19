@@ -20,6 +20,7 @@ import (
 	"github.com/NikMusy/FastZapret/internal/config"
 	"github.com/NikMusy/FastZapret/internal/elevate"
 	"github.com/NikMusy/FastZapret/internal/engine"
+	"github.com/NikMusy/FastZapret/internal/tray"
 	"github.com/NikMusy/FastZapret/internal/webui"
 )
 
@@ -33,6 +34,7 @@ var (
 	flagPrint    = flag.Bool("print", false, "показать командную строку winws и выйти (ничего не запускает)")
 	flagNoStart  = flag.Bool("no-start", false, "не запускать движок автоматически")
 	flagNoElev   = flag.Bool("no-elevate", false, "не запрашивать права администратора (UAC)")
+	flagNoTray   = flag.Bool("no-tray", false, "не показывать иконку в трее")
 )
 
 func main() {
@@ -65,6 +67,9 @@ func main() {
 	}
 	if *flagNoStart {
 		cfg.Autostart = false
+	}
+	if *flagNoTray {
+		cfg.Tray = false
 	}
 
 	exe, _ := os.Executable()
@@ -130,13 +135,14 @@ func main() {
 		}
 	}
 
+	url := ""
 	if cfg.UIAddr != "" {
 		srv := webui.New(eng, cfg.UIAddr)
 		addr, err := srv.Serve(ctx)
 		if err != nil {
 			fmt.Fprintln(os.Stderr, "UI: не удалось открыть", cfg.UIAddr, ":", err)
 		} else {
-			url := "http://" + addr + "/"
+			url = "http://" + addr + "/"
 			fmt.Println("веб-UI    :", url)
 			if cfg.OpenUI {
 				time.Sleep(300 * time.Millisecond)
@@ -145,7 +151,16 @@ func main() {
 		}
 	}
 
-	<-ctx.Done()
+	if cfg.Tray {
+		// иконка в трее — основной цикл; выход из меню завершает приложение.
+		go func() {
+			<-ctx.Done()
+			tray.Quit()
+		}()
+		tray.Run(eng, url, cancel)
+	} else {
+		<-ctx.Done()
+	}
 	_ = eng.Stop()
 }
 

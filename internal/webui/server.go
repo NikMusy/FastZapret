@@ -12,6 +12,7 @@ import (
 	"runtime"
 	"time"
 
+	"github.com/NikMusy/FastZapret/internal/autostart"
 	"github.com/NikMusy/FastZapret/internal/engine"
 	"github.com/NikMusy/FastZapret/internal/netcheck"
 	"github.com/NikMusy/FastZapret/internal/winws"
@@ -65,6 +66,7 @@ func (s *Server) Serve(ctx context.Context) (string, error) {
 	mux.HandleFunc("/api/restart", s.handleRestart)
 	mux.HandleFunc("/api/logs", s.handleLogs)
 	mux.HandleFunc("/api/check", s.handleCheck)
+	mux.HandleFunc("/api/autostart", s.handleAutostart)
 
 	ln, err := net.Listen("tcp", s.addr)
 	if err != nil {
@@ -92,18 +94,33 @@ type stateResp struct {
 	Status      engine.Status `json:"status"`
 	Strategies  []string      `json:"strategies"`
 	LastCommand string        `json:"last_command"`
+	Autostart   bool          `json:"autostart"`
 	Version     string        `json:"version"`
 }
 
-var version = "2.1.0"
+var version = "2.2.0"
 
 func (s *Server) handleState(w http.ResponseWriter, _ *http.Request) {
 	writeJSON(w, stateResp{
 		Status:      s.eng.Status(),
 		Strategies:  winws.Strategies,
 		LastCommand: s.eng.LastCommand(),
+		Autostart:   autostart.IsEnabled(),
 		Version:     version,
 	})
+}
+
+func (s *Server) handleAutostart(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "POST only", http.StatusMethodNotAllowed)
+		return
+	}
+	on, err := autostart.Toggle()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	writeJSON(w, map[string]any{"ok": true, "autostart": on})
 }
 
 func (s *Server) handleProfile(w http.ResponseWriter, r *http.Request) {

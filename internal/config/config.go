@@ -18,6 +18,7 @@ type Config struct {
 	UIAddr     string // адрес веб-UI (пусто = отключить)
 	OpenUI     bool   // открывать браузер при старте
 	Autostart  bool   // запускать движок сразу при старте приложения
+	Tray       bool   // показывать иконку в системном трее
 	BinDir     string // переопределение папки bin (пусто = авто)
 	ListsDir   string // переопределение папки lists (пусто = авто)
 }
@@ -30,6 +31,7 @@ func Defaults() Config {
 		UIAddr:    "127.0.0.1:7890",
 		OpenUI:    true,
 		Autostart: true,
+		Tray:      true,
 	}
 }
 
@@ -75,6 +77,8 @@ func Load(path string) (Config, error) {
 			cfg.OpenUI = parseBool(val)
 		case "autostart":
 			cfg.Autostart = parseBool(val)
+		case "tray":
+			cfg.Tray = parseBool(val)
 		case "bin_dir":
 			cfg.BinDir = val
 		case "lists_dir":

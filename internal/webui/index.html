@@ -87,7 +87,7 @@ summary { cursor: pointer; color: var(--accent2); font-size: 13px; }
 <div class="wrap">
   <header>
     <div class="logo"><span class="dot" id="dot"></span> FastZapret</div>
-    <div class="badge" id="ver">v2.1.0</div>
+    <div class="badge" id="ver">v2.2.0</div>
   </header>
 
   <div class="banner" id="banner"></div>
@@ -107,6 +107,10 @@ summary { cursor: pointer; color: var(--accent2); font-size: 13px; }
       <div class="row-actions">
         <button class="btn" id="btn-restart">Перезапуск</button>
         <button class="btn" id="btn-stop">Остановить</button>
+      </div>
+      <div class="toggle-row sub" id="autostart" style="margin-top:14px">
+        <div class="name">Автозапуск с Windows</div>
+        <div class="switch sm"></div>
       </div>
     </div>
 
@@ -220,6 +224,7 @@ function render() {
     b.classList.toggle('active', b.dataset.s === prof.strategy));
   document.getElementById('strat-desc').textContent = STRAT_DESC[prof.strategy] || '';
 
+  document.getElementById('autostart').classList.toggle('on-sw', !!st.autostart);
   document.getElementById('lmu').classList.toggle('on-sw', prof.lemans);
   document.getElementById('lmuwide').style.display = prof.lemans ? 'flex' : 'none';
   document.getElementById('lmuwide').classList.toggle('on-sw', prof.lemans_wide);
@@ -262,6 +267,10 @@ document.getElementById('power').addEventListener('click', async () => {
 });
 document.getElementById('lmu').addEventListener('click', () => { prof.lemans = !prof.lemans; if(!prof.lemans) prof.lemans_wide=false; postProfile(); });
 document.getElementById('lmuwide').addEventListener('click', (e) => { e.stopPropagation(); prof.lemans_wide = !prof.lemans_wide; postProfile(); });
+document.getElementById('autostart').addEventListener('click', async () => {
+  try { await fetch('/api/autostart', { method: 'POST' }); } catch (e) {}
+  setTimeout(fetchState, 400);
+});
 document.getElementById('btn-restart').addEventListener('click', async () => { await fetch('/api/restart', { method: 'POST' }); setTimeout(fetchState, 900); });
 document.getElementById('btn-stop').addEventListener('click', async () => { await fetch('/api/stop', { method: 'POST' }); setTimeout(fetchState, 500); });
 
