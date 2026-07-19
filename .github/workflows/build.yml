@@ -31,7 +31,7 @@ jobs:
         run: |
           mkdir -p dist/FastZapret
           cp -r bin lists configs dist/FastZapret/
-          cp general.bat "Le Mans Ultimate.bat" fastzapret-gui.exe fastzapret-cli.exe README.md dist/FastZapret/
+          cp general.bat "Le Mans Ultimate.bat" "Всё сразу.bat" fastzapret-gui.exe fastzapret-cli.exe README.md dist/FastZapret/
           cp scripts/*.bat scripts/*.ps1 dist/FastZapret/ 2>/dev/null || true
           cd dist && 7z a -tzip ../FastZapret.zip FastZapret >/dev/null
 

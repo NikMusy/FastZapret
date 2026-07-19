@@ -87,7 +87,7 @@ summary { cursor: pointer; color: var(--accent2); font-size: 13px; }
 <div class="wrap">
   <header>
     <div class="logo"><span class="dot" id="dot"></span> FastZapret</div>
-    <div class="badge" id="ver">v2.2.0</div>
+    <div class="badge" id="ver">v2.3.0</div>
   </header>
 
   <div class="banner" id="banner"></div>
@@ -142,7 +142,11 @@ summary { cursor: pointer; color: var(--accent2); font-size: 13px; }
         <div class="name">широкие порты (для нестандартных серверов, медленнее)</div>
         <div class="switch sm"></div>
       </div>
-      <div class="hint">Мягкий профиль под онлайн LMU (Cloudflare + Hetzner) на точных портах — быстро, без лагов сессии. Если часть серверов на Hetzner не пускает — включи <b>Cloudflare WARP</b>.</div>
+      <div class="toggle-row" id="allgames" style="margin-top:10px">
+        <div class="name"><span class="ico" style="background:linear-gradient(135deg,var(--green),var(--accent2));color:#06210f">ВСЁ</span> Все игры (максимум)</div>
+        <div class="switch"></div>
+      </div>
+      <div class="hint">LMU: мягкий профиль на точных портах — быстро, без лагов. «Все игры» — широкий захват для любых игр (максимум покрытия, но трафика перехватывается больше). Если сервер на Hetzner не пускает — включи <b>Cloudflare WARP</b>.</div>
     </div>
   </div>
 
@@ -180,7 +184,7 @@ const STRAT_DESC = {
 };
 
 let st = null;
-let prof = { strategy: 'default', lemans: false, lemans_wide: false };
+let prof = { strategy: 'default', lemans: false, lemans_wide: false, all_games: false };
 let busy = false;
 
 async function fetchState() {
@@ -190,6 +194,7 @@ async function fetchState() {
     prof.strategy = st.status.strategy || 'default';
     prof.lemans = !!st.status.lemans;
     prof.lemans_wide = !!st.status.lemans_wide;
+    prof.all_games = !!st.status.all_games;
     render();
   } catch (e) {}
 }
@@ -228,6 +233,7 @@ function render() {
   document.getElementById('lmu').classList.toggle('on-sw', prof.lemans);
   document.getElementById('lmuwide').style.display = prof.lemans ? 'flex' : 'none';
   document.getElementById('lmuwide').classList.toggle('on-sw', prof.lemans_wide);
+  document.getElementById('allgames').classList.toggle('on-sw', prof.all_games);
   document.getElementById('cmd').textContent = st.last_command || '';
 
   // баннер про админ-права: включили, но движок не поднялся
@@ -267,6 +273,7 @@ document.getElementById('power').addEventListener('click', async () => {
 });
 document.getElementById('lmu').addEventListener('click', () => { prof.lemans = !prof.lemans; if(!prof.lemans) prof.lemans_wide=false; postProfile(); });
 document.getElementById('lmuwide').addEventListener('click', (e) => { e.stopPropagation(); prof.lemans_wide = !prof.lemans_wide; postProfile(); });
+document.getElementById('allgames').addEventListener('click', () => { prof.all_games = !prof.all_games; if (prof.all_games) prof.lemans = true; postProfile(); });
 document.getElementById('autostart').addEventListener('click', async () => {
   try { await fetch('/api/autostart', { method: 'POST' }); } catch (e) {}
   setTimeout(fetchState, 400);

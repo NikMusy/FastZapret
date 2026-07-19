@@ -24,6 +24,10 @@ type Profile struct {
 	// портов LMU. Медленнее (больше трафика через user-space, возможны лаги),
 	// но покрывает сервера с нестандартными портами. По умолчанию выключено.
 	LeMansWide bool `json:"lemans_wide"`
+	// AllGames — общий игровой фильтр для ЛЮБЫХ игр: широкие порты + все
+	// заблокированные IP (ipset-all), мягкий desync по первым пакетам.
+	// Максимальное покрытие («всё сразу»), но перехватывается больше трафика.
+	AllGames bool `json:"all_games"`
 }
 
 // DefaultProfile — профиль по умолчанию.
@@ -69,9 +73,11 @@ func BuildArgs(p Profile, binDir, listsDir string) []string {
 	// --- глобальный фильтр WinDivert (какие порты вообще перехватывать) ---
 	wfTCP := "80,443,2053,2083,2087,2096,8443"
 	wfUDP := "443,19294-19344,50000-50100"
-	if p.LeMans {
-		wfTCP += "," + lmuPortsTCP(p.LeMansWide)
-		wfUDP += "," + lmuPortsUDP(p.LeMansWide)
+	// широкие порты, если включён общий игровой фильтр или широкий режим LMU
+	gameWide := p.LeMansWide || p.AllGames
+	if p.LeMans || p.AllGames {
+		wfTCP += "," + lmuPortsTCP(gameWide)
+		wfUDP += "," + lmuPortsUDP(gameWide)
 	}
 
 	var groups [][]string
@@ -174,7 +180,12 @@ func BuildArgs(p Profile, binDir, listsDir string) []string {
 
 	// ---- Le Mans Ultimate ----
 	if p.LeMans {
-		groups = append(groups, lmuGroups(b, l, excl, tlsSeqovlBig, tlsSeqovlSmall, splitPos, p.LeMansWide)...)
+		groups = append(groups, lmuGroups(b, l, excl, tlsSeqovlBig, tlsSeqovlSmall, splitPos, gameWide)...)
+	}
+
+	// ---- общий игровой фильтр (любые игры к заблокированным IP) ----
+	if p.AllGames {
+		groups = append(groups, allGamesGroups(b, l, tlsSeqovlSmall)...)
 	}
 
 	// ---- склейка: --wf-* ... group1 --new group2 --new ... ----
@@ -246,6 +257,35 @@ func lmuGroups(b, l func(string) string, excl []string, seqBig, seqSmall, pos st
 	g = append(g, d)
 
 	return g
+}
+
+// allGamesGroups — общий игровой фильтр: любые игры (широкие порты) к любым
+// заблокированным IP (ipset-all). Мягкий desync по первым пакетам, чтобы
+// пробить DPI на коннекте и не ломать сессию. Даёт «всё сразу».
+func allGamesGroups(b, l func(string) string, seqSmall string) [][]string {
+	excludeIP := []string{
+		"--ipset-exclude=" + l("ipset-exclude.txt"),
+		"--ipset-exclude=" + l("ipset-exclude-user.txt"),
+	}
+	tcp := append([]string{
+		"--filter-tcp=" + lmuWidePorts,
+		"--ipset=" + l("ipset-all.txt"),
+	}, excludeIP...)
+	tcp = append(tcp,
+		"--dpi-desync=multisplit", "--dpi-desync-any-protocol=1", "--dpi-desync-cutoff=n3",
+		"--dpi-desync-split-seqovl="+seqSmall, "--dpi-desync-split-pos=1",
+		"--dpi-desync-split-seqovl-pattern="+b("tls_clienthello_4pda_to.bin"),
+	)
+	udp := append([]string{
+		"--filter-udp=" + lmuWidePorts,
+		"--ipset=" + l("ipset-all.txt"),
+	}, excludeIP...)
+	udp = append(udp,
+		"--dpi-desync=fake", "--dpi-desync-repeats=10", "--dpi-desync-any-protocol=1",
+		"--dpi-desync-fake-unknown-udp="+b("quic_initial_dbankcloud_ru.bin"),
+		"--dpi-desync-cutoff=n2",
+	)
+	return [][]string{tcp, udp}
 }
 
 // CommandLine возвращает argv как строку для показа/логов (с кавычками вокруг

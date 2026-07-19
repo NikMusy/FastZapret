@@ -195,11 +195,13 @@ func (e *Engine) Running() bool {
 
 // Status — снимок состояния для UI.
 type Status struct {
-	Running   bool   `json:"running"`
-	PID       int    `json:"pid"`
-	UptimeSec int64  `json:"uptime_sec"`
-	Strategy  string `json:"strategy"`
-	LeMans    bool   `json:"lemans"`
+	Running    bool   `json:"running"`
+	PID        int    `json:"pid"`
+	UptimeSec  int64  `json:"uptime_sec"`
+	Strategy   string `json:"strategy"`
+	LeMans     bool   `json:"lemans"`
+	LeMansWide bool   `json:"lemans_wide"`
+	AllGames   bool   `json:"all_games"`
 }
 
 // Status возвращает текущее состояние.
@@ -207,9 +209,11 @@ func (e *Engine) Status() Status {
 	e.mu.Lock()
 	defer e.mu.Unlock()
 	st := Status{
-		Running:  e.running,
-		Strategy: e.prof.Strategy,
-		LeMans:   e.prof.LeMans,
+		Running:    e.running,
+		Strategy:   e.prof.Strategy,
+		LeMans:     e.prof.LeMans,
+		LeMansWide: e.prof.LeMansWide,
+		AllGames:   e.prof.AllGames,
 	}
 	if e.running && e.cmd != nil && e.cmd.Process != nil {
 		st.PID = e.cmd.Process.Pid

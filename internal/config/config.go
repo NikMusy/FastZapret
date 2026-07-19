@@ -15,6 +15,7 @@ type Config struct {
 	Strategy   string // default | alt | alt2 | alt3
 	LeMans     bool   // включить профиль Le Mans Ultimate
 	LeMansWide bool   // ловить широкий диапазон портов LMU (медленнее, но шире)
+	AllGames   bool   // общий игровой фильтр для любых игр («всё сразу»)
 	UIAddr     string // адрес веб-UI (пусто = отключить)
 	OpenUI     bool   // открывать браузер при старте
 	Autostart  bool   // запускать движок сразу при старте приложения
@@ -41,7 +42,12 @@ func (c Config) Profile() winws.Profile {
 	if s == "" {
 		s = "default"
 	}
-	return winws.Profile{Strategy: s, LeMans: c.LeMans, LeMansWide: c.LeMansWide}
+	return winws.Profile{
+		Strategy:   s,
+		LeMans:     c.LeMans,
+		LeMansWide: c.LeMansWide,
+		AllGames:   c.AllGames,
+	}
 }
 
 // Load читает INI-файл поверх defaults.
@@ -71,6 +77,8 @@ func Load(path string) (Config, error) {
 			cfg.LeMans = parseBool(val)
 		case "lemans_wide", "lmu_wide":
 			cfg.LeMansWide = parseBool(val)
+		case "all_games", "allgames", "all":
+			cfg.AllGames = parseBool(val)
 		case "ui", "ui_addr":
 			cfg.UIAddr = val
 		case "open_ui", "open":

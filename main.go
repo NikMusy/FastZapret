@@ -29,6 +29,7 @@ var (
 	flagStrategy = flag.String("strategy", "", "default|alt|alt2|alt3 (override)")
 	flagLeMans   = flag.Bool("lmu", false, "включить профиль Le Mans Ultimate")
 	flagLeMansW  = flag.Bool("lmu-wide", false, "LMU: ловить широкий диапазон портов (медленнее)")
+	flagAll      = flag.Bool("all", false, "включить всё: обход + LMU + общий игровой фильтр")
 	flagUI       = flag.String("ui", "", "адрес веб-UI (пусто = как в конфиге)")
 	flagNoOpen   = flag.Bool("no-open", false, "не открывать браузер")
 	flagPrint    = flag.Bool("print", false, "показать командную строку winws и выйти (ничего не запускает)")
@@ -58,6 +59,10 @@ func main() {
 	if *flagLeMansW {
 		cfg.LeMans = true
 		cfg.LeMansWide = true
+	}
+	if *flagAll {
+		cfg.LeMans = true
+		cfg.AllGames = true
 	}
 	if *flagUI != "" {
 		cfg.UIAddr = *flagUI

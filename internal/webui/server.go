@@ -98,7 +98,7 @@ type stateResp struct {
 	Version     string        `json:"version"`
 }
 
-var version = "2.2.0"
+var version = "2.3.0"
 
 func (s *Server) handleState(w http.ResponseWriter, _ *http.Request) {
 	writeJSON(w, stateResp{
