@@ -20,6 +20,10 @@ type Profile struct {
 	Strategy string `json:"strategy"`
 	// LeMans включает выделенную группу стратегий под Le Mans Ultimate.
 	LeMans bool `json:"lemans"`
+	// LeMansWide — ловить широкий диапазон портов (1024-65535) вместо точных
+	// портов LMU. Медленнее (больше трафика через user-space, возможны лаги),
+	// но покрывает сервера с нестандартными портами. По умолчанию выключено.
+	LeMansWide bool `json:"lemans_wide"`
 }
 
 // DefaultProfile — профиль по умолчанию.
@@ -30,12 +34,31 @@ func DefaultProfile() Profile {
 // Strategies — список доступных базовых наборов (для UI).
 var Strategies = []string{"default", "alt", "alt2", "alt3"}
 
-// диапазоны портов игрового фильтра LMU.
-// Широкие порты, но desync срабатывает ТОЛЬКО для IP из ipset-lmu.txt.
+// Порты игрового фильтра LMU. Desync срабатывает ТОЛЬКО для IP из ipset-lmu.txt,
+// но перехват (divert) в winws идёт по портам — поэтому узкий набор = меньше
+// лишнего трафика через user-space = меньше лагов.
+//
+// Точные порты LMU/rFactor2: 54297 (симуляция TCP+UDP), 64297 (HTTP TCP),
+// 64298/64299 (UDP). Их и ловим по умолчанию.
 const (
-	lmuGamePortsTCP = "1024-65535"
-	lmuGamePortsUDP = "1024-65535"
+	lmuNarrowTCP = "54297,64297"
+	lmuNarrowUDP = "54297,64298,64299"
+	lmuWidePorts = "1024-65535"
 )
+
+func lmuPortsTCP(wide bool) string {
+	if wide {
+		return lmuWidePorts
+	}
+	return lmuNarrowTCP
+}
+
+func lmuPortsUDP(wide bool) string {
+	if wide {
+		return lmuWidePorts
+	}
+	return lmuNarrowUDP
+}
 
 // BuildArgs собирает полный argv для winws.exe.
 // binDir — папка bin (winws.exe, *.bin, WinDivert.dll), listsDir — папка lists.
@@ -47,8 +70,8 @@ func BuildArgs(p Profile, binDir, listsDir string) []string {
 	wfTCP := "80,443,2053,2083,2087,2096,8443"
 	wfUDP := "443,19294-19344,50000-50100"
 	if p.LeMans {
-		wfTCP += "," + lmuGamePortsTCP
-		wfUDP += "," + lmuGamePortsUDP
+		wfTCP += "," + lmuPortsTCP(p.LeMansWide)
+		wfUDP += "," + lmuPortsUDP(p.LeMansWide)
 	}
 
 	var groups [][]string
@@ -151,7 +174,7 @@ func BuildArgs(p Profile, binDir, listsDir string) []string {
 
 	// ---- Le Mans Ultimate ----
 	if p.LeMans {
-		groups = append(groups, lmuGroups(b, l, excl, tlsSeqovlBig, tlsSeqovlSmall, splitPos)...)
+		groups = append(groups, lmuGroups(b, l, excl, tlsSeqovlBig, tlsSeqovlSmall, splitPos, p.LeMansWide)...)
 	}
 
 	// ---- склейка: --wf-* ... group1 --new group2 --new ... ----
@@ -178,8 +201,10 @@ func BuildArgs(p Profile, binDir, listsDir string) []string {
 // только к первым пакетам соединения (пробить DPI на коннекте), а сама сессия
 // идёт нетронутой. Это чинит «выкидывает в лобби после загрузки карты»:
 // раньше агрессивный desync курочил сессионные пакеты.
-func lmuGroups(b, l func(string) string, excl []string, seqBig, seqSmall, pos string) [][]string {
+func lmuGroups(b, l func(string) string, excl []string, seqBig, seqSmall, pos string, wide bool) [][]string {
 	var g [][]string
+	gameTCP := lmuPortsTCP(wide)
+	gameUDP := lmuPortsUDP(wide)
 
 	// A) TLS/API LMU (Cloudflare) — по доменам и по ipset-lmu.
 	a := []string{
@@ -197,7 +222,7 @@ func lmuGroups(b, l func(string) string, excl []string, seqBig, seqSmall, pos st
 
 	// B) игровой TCP (Hetzner/CF) — мягко, только первые пакеты.
 	c := []string{
-		"--filter-tcp=" + lmuGamePortsTCP,
+		"--filter-tcp=" + gameTCP,
 		"--ipset=" + l("ipset-lmu.txt"),
 		"--ipset-exclude=" + l("ipset-exclude.txt"),
 		"--ipset-exclude=" + l("ipset-exclude-user.txt"),
@@ -210,7 +235,7 @@ func lmuGroups(b, l func(string) string, excl []string, seqBig, seqSmall, pos st
 
 	// C) игровой UDP (Hetzner/CF) — мягкий fake, только первые пакеты.
 	d := []string{
-		"--filter-udp=" + lmuGamePortsUDP,
+		"--filter-udp=" + gameUDP,
 		"--ipset=" + l("ipset-lmu.txt"),
 		"--ipset-exclude=" + l("ipset-exclude.txt"),
 		"--ipset-exclude=" + l("ipset-exclude-user.txt"),

@@ -10,6 +10,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"net"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -17,6 +18,7 @@ import (
 	"time"
 
 	"github.com/NikMusy/FastZapret/internal/config"
+	"github.com/NikMusy/FastZapret/internal/elevate"
 	"github.com/NikMusy/FastZapret/internal/engine"
 	"github.com/NikMusy/FastZapret/internal/webui"
 )
@@ -25,10 +27,12 @@ var (
 	flagConfig   = flag.String("config", "", "путь к INI-конфигу (опц.)")
 	flagStrategy = flag.String("strategy", "", "default|alt|alt2|alt3 (override)")
 	flagLeMans   = flag.Bool("lmu", false, "включить профиль Le Mans Ultimate")
+	flagLeMansW  = flag.Bool("lmu-wide", false, "LMU: ловить широкий диапазон портов (медленнее)")
 	flagUI       = flag.String("ui", "", "адрес веб-UI (пусто = как в конфиге)")
 	flagNoOpen   = flag.Bool("no-open", false, "не открывать браузер")
 	flagPrint    = flag.Bool("print", false, "показать командную строку winws и выйти (ничего не запускает)")
 	flagNoStart  = flag.Bool("no-start", false, "не запускать движок автоматически")
+	flagNoElev   = flag.Bool("no-elevate", false, "не запрашивать права администратора (UAC)")
 )
 
 func main() {
@@ -48,6 +52,10 @@ func main() {
 	}
 	if *flagLeMans {
 		cfg.LeMans = true
+	}
+	if *flagLeMansW {
+		cfg.LeMans = true
+		cfg.LeMansWide = true
 	}
 	if *flagUI != "" {
 		cfg.UIAddr = *flagUI
@@ -76,6 +84,23 @@ func main() {
 	if *flagPrint {
 		fmt.Println(eng.LastCommand())
 		return
+	}
+
+	// уже запущен другой экземпляр? — просто откроем его панель.
+	if cfg.UIAddr != "" && instanceRunning(cfg.UIAddr) {
+		fmt.Println("FastZapret уже запущен, открываю панель:", "http://"+cfg.UIAddr+"/")
+		if cfg.OpenUI {
+			webui.OpenInBrowser("http://" + cfg.UIAddr + "/")
+		}
+		return
+	}
+
+	// winws требует прав администратора — при необходимости запрашиваем UAC.
+	if !*flagNoElev && !elevate.IsAdmin() {
+		if err := elevate.RelaunchAsAdmin(); err == nil {
+			return // права выданы — работает уже поднятый экземпляр
+		}
+		fmt.Fprintln(os.Stderr, "внимание: нет прав администратора — winws может не запуститься")
 	}
 
 	// проверим, что движок на месте
@@ -129,4 +154,14 @@ func onoff(b bool) string {
 		return "вкл"
 	}
 	return "выкл"
+}
+
+// instanceRunning — true, если по адресу UI уже кто-то отвечает.
+func instanceRunning(addr string) bool {
+	c, err := net.DialTimeout("tcp", addr, 300*time.Millisecond)
+	if err != nil {
+		return false
+	}
+	_ = c.Close()
+	return true
 }

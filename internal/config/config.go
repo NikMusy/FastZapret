@@ -12,13 +12,14 @@ import (
 
 // Config — все настройки приложения.
 type Config struct {
-	Strategy  string // default | alt | alt2 | alt3 | fake_tls
-	LeMans    bool   // включить профиль Le Mans Ultimate
-	UIAddr    string // адрес веб-UI (пусто = отключить)
-	OpenUI    bool   // открывать браузер при старте
-	Autostart bool   // запускать движок сразу при старте приложения
-	BinDir    string // переопределение папки bin (пусто = авто)
-	ListsDir  string // переопределение папки lists (пусто = авто)
+	Strategy   string // default | alt | alt2 | alt3
+	LeMans     bool   // включить профиль Le Mans Ultimate
+	LeMansWide bool   // ловить широкий диапазон портов LMU (медленнее, но шире)
+	UIAddr     string // адрес веб-UI (пусто = отключить)
+	OpenUI     bool   // открывать браузер при старте
+	Autostart  bool   // запускать движок сразу при старте приложения
+	BinDir     string // переопределение папки bin (пусто = авто)
+	ListsDir   string // переопределение папки lists (пусто = авто)
 }
 
 // Defaults — настройки по умолчанию.
@@ -38,7 +39,7 @@ func (c Config) Profile() winws.Profile {
 	if s == "" {
 		s = "default"
 	}
-	return winws.Profile{Strategy: s, LeMans: c.LeMans}
+	return winws.Profile{Strategy: s, LeMans: c.LeMans, LeMansWide: c.LeMansWide}
 }
 
 // Load читает INI-файл поверх defaults.
@@ -66,6 +67,8 @@ func Load(path string) (Config, error) {
 			cfg.Strategy = strings.ToLower(val)
 		case "lemans", "le_mans", "lmu":
 			cfg.LeMans = parseBool(val)
+		case "lemans_wide", "lmu_wide":
+			cfg.LeMansWide = parseBool(val)
 		case "ui", "ui_addr":
 			cfg.UIAddr = val
 		case "open_ui", "open":

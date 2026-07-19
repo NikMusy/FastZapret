@@ -10,8 +10,10 @@ import (
 	"net/http"
 	"os/exec"
 	"runtime"
+	"time"
 
 	"github.com/NikMusy/FastZapret/internal/engine"
+	"github.com/NikMusy/FastZapret/internal/netcheck"
 	"github.com/NikMusy/FastZapret/internal/winws"
 )
 
@@ -62,6 +64,7 @@ func (s *Server) Serve(ctx context.Context) (string, error) {
 	mux.HandleFunc("/api/stop", s.handleStop)
 	mux.HandleFunc("/api/restart", s.handleRestart)
 	mux.HandleFunc("/api/logs", s.handleLogs)
+	mux.HandleFunc("/api/check", s.handleCheck)
 
 	ln, err := net.Listen("tcp", s.addr)
 	if err != nil {
@@ -92,7 +95,7 @@ type stateResp struct {
 	Version     string        `json:"version"`
 }
 
-var version = "2.0.0"
+var version = "2.1.0"
 
 func (s *Server) handleState(w http.ResponseWriter, _ *http.Request) {
 	writeJSON(w, stateResp{
@@ -158,6 +161,11 @@ func (s *Server) handleRestart(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) handleLogs(w http.ResponseWriter, _ *http.Request) {
 	writeJSON(w, s.eng.Logs())
+}
+
+// handleCheck — проверка доступности сервисов (работает ли обход).
+func (s *Server) handleCheck(w http.ResponseWriter, _ *http.Request) {
+	writeJSON(w, netcheck.Check(netcheck.DefaultTargets, 4*time.Second))
 }
 
 func writeJSON(w http.ResponseWriter, v any) {

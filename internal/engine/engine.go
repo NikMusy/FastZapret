@@ -72,6 +72,9 @@ func (e *Engine) startLocked() error {
 	if e.running {
 		return nil
 	}
+	// подчистить возможные зависшие экземпляры, чтобы не конфликтовать за драйвер
+	_ = exec.Command("taskkill", "/F", "/IM", "winws.exe").Run()
+
 	args := winws.BuildArgs(e.prof, e.binDir, e.listsDir)
 	e.lastCmd = winws.CommandLine(e.exe, args)
 

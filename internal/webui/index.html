@@ -22,15 +22,17 @@
 html, body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; min-height: 100vh; }
 body { background: radial-gradient(circle at 20% 0%, rgba(124,92,255,.15), transparent 50%), radial-gradient(circle at 80% 100%, rgba(76,199,255,.1), transparent 50%), var(--bg); }
 .wrap { max-width: 1100px; margin: 0 auto; padding: 32px 24px; }
-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 28px; }
+header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 22px; }
 .logo { display: flex; align-items: center; gap: 12px; font-weight: 700; font-size: 22px; }
 .logo .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--green); box-shadow: 0 0 12px var(--green); animation: pulse 2s infinite; }
 .logo .dot.off { background: var(--red); box-shadow: 0 0 12px var(--red); }
 @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .5; } }
 .badge { background: var(--panel2); border: 1px solid var(--border); padding: 4px 10px; border-radius: 12px; font-size: 12px; color: var(--muted); }
+.banner { display:none; background: rgba(255,71,87,.12); border:1px solid rgba(255,71,87,.4); color:#ffb3ba; padding:12px 16px; border-radius:12px; font-size:14px; margin-bottom:18px; }
+.banner.show { display:block; }
 .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
 .card { background: var(--panel); border: 1px solid var(--border); border-radius: 16px; padding: 22px; }
-.card h2 { font-size: 13px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .8px; margin-bottom: 14px; }
+.card h2 { font-size: 13px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .8px; margin-bottom: 14px; display:flex; justify-content:space-between; align-items:center; }
 .big-toggle { display: flex; align-items: center; gap: 18px; }
 .power { width: 76px; height: 76px; border-radius: 50%; background: var(--panel2); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all .25s; position: relative; flex: none; }
 .power:hover { transform: scale(1.05); }
@@ -42,25 +44,38 @@ header { display: flex; align-items: center; justify-content: space-between; mar
 .kv .stat { background: var(--panel2); border-radius: 12px; padding: 14px; }
 .kv .num { font-size: 20px; font-weight: 700; }
 .kv .lbl { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .6px; margin-top: 4px; }
-.lmu-toggle { display: flex; align-items: center; justify-content: space-between; background: var(--panel2); padding: 16px 18px; border-radius: 12px; cursor: pointer; user-select: none; }
-.lmu-toggle:hover { background: #20263c; }
-.lmu-toggle .name { display: flex; align-items: center; gap: 12px; font-weight: 700; font-size: 15px; }
-.lmu-toggle .ico { width: 34px; height: 34px; border-radius: 8px; background: linear-gradient(135deg,#e10600,#ffbf3f); display:flex; align-items:center; justify-content:center; font-weight:800; color:#111; font-size:12px; }
+.toggle-row { display: flex; align-items: center; justify-content: space-between; background: var(--panel2); padding: 15px 18px; border-radius: 12px; cursor: pointer; user-select: none; }
+.toggle-row:hover { background: #20263c; }
+.toggle-row + .toggle-row { margin-top: 10px; }
+.toggle-row.sub { padding: 12px 16px; background: #151b2b; }
+.toggle-row .name { display: flex; align-items: center; gap: 12px; font-weight: 700; font-size: 15px; }
+.toggle-row.sub .name { font-weight: 500; font-size: 13.5px; color: var(--muted); }
+.toggle-row .ico { width: 34px; height: 34px; border-radius: 8px; background: linear-gradient(135deg,#e10600,#ffbf3f); display:flex; align-items:center; justify-content:center; font-weight:800; color:#111; font-size:12px; }
 .switch { width: 46px; height: 26px; background: #2a3148; border-radius: 13px; position: relative; transition: .2s; flex: none; }
+.switch.sm { width: 40px; height: 23px; }
 .switch::after { content: ''; position: absolute; width: 20px; height: 20px; border-radius: 50%; background: white; top: 3px; left: 3px; transition: .2s; }
+.switch.sm::after { width: 17px; height: 17px; }
 .on-sw .switch { background: var(--green); }
 .on-sw .switch::after { left: 23px; }
+.on-sw .switch.sm::after { left: 20px; }
 .tune-row { display: flex; gap: 8px; flex-wrap: wrap; }
-.tune-row button { flex: 1; min-width: 90px; background: var(--panel2); border: 1px solid var(--border); color: var(--text); padding: 12px 8px; border-radius: 10px; font-size: 13px; font-weight: 600; cursor: pointer; transition: .15s; }
+.tune-row button { flex: 1; min-width: 80px; background: var(--panel2); border: 1px solid var(--border); color: var(--text); padding: 12px 8px; border-radius: 10px; font-size: 13px; font-weight: 600; cursor: pointer; transition: .15s; }
 .tune-row button:hover { background: #20263c; }
 .tune-row button.active { background: linear-gradient(135deg, var(--accent), var(--accent2)); border-color: transparent; }
-.logs { background: #0b0f1c; border-radius: 10px; padding: 12px; height: 240px; overflow-y: auto; font-family: 'Cascadia Code', 'JetBrains Mono', Consolas, monospace; font-size: 12px; line-height: 1.55; color: var(--muted); }
+.checks { display:flex; flex-direction:column; gap:8px; }
+.check { display:flex; align-items:center; justify-content:space-between; background: var(--panel2); padding: 12px 14px; border-radius: 10px; font-size:14px; }
+.pill { font-size:12px; font-weight:700; padding:4px 10px; border-radius:20px; background:#2a3148; color:var(--muted); }
+.pill.ok { background: rgba(0,217,126,.15); color: var(--green); }
+.pill.bad { background: rgba(255,71,87,.15); color: var(--red); }
+.pill.wait { background: rgba(76,199,255,.15); color: var(--accent2); }
+.logs { background: #0b0f1c; border-radius: 10px; padding: 12px; height: 220px; overflow-y: auto; font-family: 'Cascadia Code', 'JetBrains Mono', Consolas, monospace; font-size: 12px; line-height: 1.55; color: var(--muted); }
 .logs div { padding: 2px 0; border-bottom: 1px dashed #1f2540; white-space: pre-wrap; word-break: break-word; }
-.cmd { background: #0b0f1c; border-radius: 10px; padding: 12px; font-family: 'Cascadia Code', Consolas, monospace; font-size: 11.5px; color: var(--muted); overflow-x: auto; white-space: pre-wrap; word-break: break-all; max-height: 200px; overflow-y: auto; }
+.cmd { background: #0b0f1c; border-radius: 10px; padding: 12px; font-family: 'Cascadia Code', Consolas, monospace; font-size: 11.5px; color: var(--muted); white-space: pre-wrap; word-break: break-all; max-height: 200px; overflow-y: auto; }
 footer { text-align: center; color: var(--muted); font-size: 12px; margin-top: 28px; }
 footer a { color: var(--accent2); text-decoration: none; }
 .btn { background: var(--panel2); border: 1px solid var(--border); color: var(--text); padding: 8px 14px; border-radius: 8px; cursor: pointer; font-size: 13px; }
 .btn:hover { background: #20263c; }
+.btn.mini { padding: 5px 12px; font-size:12px; }
 .row-actions { display: flex; gap: 8px; margin-top: 14px; }
 .hint { color: var(--muted); font-size: 12.5px; line-height: 1.5; margin-top: 12px; }
 .hint b { color: var(--gold); }
@@ -72,8 +87,10 @@ summary { cursor: pointer; color: var(--accent2); font-size: 13px; }
 <div class="wrap">
   <header>
     <div class="logo"><span class="dot" id="dot"></span> FastZapret</div>
-    <div class="badge" id="ver">v2.0.0</div>
+    <div class="badge" id="ver">v2.1.0</div>
   </header>
+
+  <div class="banner" id="banner"></div>
 
   <div class="grid">
     <div class="card">
@@ -100,7 +117,7 @@ summary { cursor: pointer; color: var(--accent2); font-size: 13px; }
         <div class="stat"><div class="num" id="uptime">—</div><div class="lbl">Аптайм</div></div>
         <div class="stat"><div class="num" id="curstrat">—</div><div class="lbl">Стратегия</div></div>
       </div>
-      <div class="hint">Движок — проверенный <b>winws.exe</b> (bol-van/zapret). FastZapret собирает для него стратегии и управляет процессом.</div>
+      <div class="hint">Движок — проверенный <b>winws.exe</b> (bol-van/zapret). FastZapret собирает стратегии и управляет процессом.</div>
     </div>
   </div>
 
@@ -108,17 +125,31 @@ summary { cursor: pointer; color: var(--accent2); font-size: 13px; }
     <div class="card">
       <h2>Стратегия обхода</h2>
       <div class="tune-row" id="strats"></div>
-      <div class="hint" id="strat-desc">Если один вариант не пробивает твоего провайдера — переключи на следующий.</div>
+      <div class="hint" id="strat-desc">Если один вариант не пробивает провайдера — переключи на следующий.</div>
     </div>
 
     <div class="card">
       <h2>Игры</h2>
-      <div class="lmu-toggle" id="lmu">
+      <div class="toggle-row" id="lmu">
         <div class="name"><span class="ico">LMU</span> Le Mans Ultimate</div>
         <div class="switch"></div>
       </div>
-      <div class="hint">Отдельный мягкий профиль под онлайн LMU (Cloudflare + Hetzner). Не ломает игровую сессию. Если часть серверов на Hetzner всё равно недоступна — включи <b>Cloudflare WARP</b> вместе с этим.</div>
+      <div class="toggle-row sub" id="lmuwide" style="display:none">
+        <div class="name">широкие порты (для нестандартных серверов, медленнее)</div>
+        <div class="switch sm"></div>
+      </div>
+      <div class="hint">Мягкий профиль под онлайн LMU (Cloudflare + Hetzner) на точных портах — быстро, без лагов сессии. Если часть серверов на Hetzner не пускает — включи <b>Cloudflare WARP</b>.</div>
     </div>
+  </div>
+
+  <div class="card" style="margin-bottom:20px">
+    <h2>Проверка связи <button class="btn mini" id="btn-check">Проверить</button></h2>
+    <div class="checks" id="checks">
+      <div class="check"><span>YouTube</span><span class="pill" data-h="YouTube">—</span></div>
+      <div class="check"><span>Discord</span><span class="pill" data-h="Discord">—</span></div>
+      <div class="check"><span>Le Mans Ultimate</span><span class="pill" data-h="Le Mans Ultimate">—</span></div>
+    </div>
+    <div class="hint">Зелёный = сервис открывается (обход работает). Красный = таймаут (заблокировано или обход не сработал — попробуй другую стратегию).</div>
   </div>
 
   <div class="card" style="margin-bottom:20px">
@@ -145,7 +176,7 @@ const STRAT_DESC = {
 };
 
 let st = null;
-let prof = { strategy: 'default', lemans: false };
+let prof = { strategy: 'default', lemans: false, lemans_wide: false };
 let busy = false;
 
 async function fetchState() {
@@ -154,6 +185,7 @@ async function fetchState() {
     st = await r.json();
     prof.strategy = st.status.strategy || 'default';
     prof.lemans = !!st.status.lemans;
+    prof.lemans_wide = !!st.status.lemans_wide;
     render();
   } catch (e) {}
 }
@@ -163,8 +195,7 @@ function buildStrats() {
   if (box.childElementCount || !st) return;
   st.strategies.forEach(s => {
     const b = document.createElement('button');
-    b.textContent = s;
-    b.dataset.s = s;
+    b.textContent = s; b.dataset.s = s;
     b.addEventListener('click', () => { prof.strategy = s; postProfile(); });
     box.appendChild(b);
   });
@@ -176,10 +207,8 @@ function render() {
   document.getElementById('ver').textContent = 'v' + st.version;
   const running = st.status.running;
 
-  const power = document.getElementById('power');
-  const dot = document.getElementById('dot');
-  power.classList.toggle('on', running);
-  dot.classList.toggle('off', !running);
+  document.getElementById('power').classList.toggle('on', running);
+  document.getElementById('dot').classList.toggle('off', !running);
   document.getElementById('status').textContent = running ? 'Защита активна' : 'Остановлено';
   document.getElementById('substatus').textContent = running ? 'winws работает' : 'нажми, чтобы включить';
 
@@ -192,7 +221,23 @@ function render() {
   document.getElementById('strat-desc').textContent = STRAT_DESC[prof.strategy] || '';
 
   document.getElementById('lmu').classList.toggle('on-sw', prof.lemans);
+  document.getElementById('lmuwide').style.display = prof.lemans ? 'flex' : 'none';
+  document.getElementById('lmuwide').classList.toggle('on-sw', prof.lemans_wide);
   document.getElementById('cmd').textContent = st.last_command || '';
+
+  // баннер про админ-права: включили, но движок не поднялся
+  const banner = document.getElementById('banner');
+  if (!running && logsHaveAdminError()) {
+    banner.textContent = '⚠ Похоже, нет прав администратора — winws не запускается. Закрой и запусти FastZapret от имени администратора.';
+    banner.classList.add('show');
+  } else {
+    banner.classList.remove('show');
+  }
+}
+
+let lastLogs = [];
+function logsHaveAdminError() {
+  return lastLogs.some(l => /завершил|error|denied|отказ/i.test(l));
 }
 
 function fmtTime(s) {
@@ -205,31 +250,43 @@ async function postProfile() {
   if (busy) return;
   busy = true;
   document.getElementById('substatus').textContent = 'применяю…';
-  try {
-    await fetch('/api/profile', { method: 'POST', body: JSON.stringify(prof) });
-  } catch (e) {}
-  setTimeout(() => { busy = false; fetchState(); }, 700);
+  try { await fetch('/api/profile', { method: 'POST', body: JSON.stringify(prof) }); } catch (e) {}
+  setTimeout(() => { busy = false; fetchState(); }, 800);
   render();
 }
 
 document.getElementById('power').addEventListener('click', async () => {
   if (!st) return;
-  const url = st.status.running ? '/api/stop' : '/api/start';
-  await fetch(url, { method: 'POST' });
-  setTimeout(fetchState, 500);
+  await fetch(st.status.running ? '/api/stop' : '/api/start', { method: 'POST' });
+  setTimeout(fetchState, 600);
 });
-document.getElementById('lmu').addEventListener('click', () => {
-  prof.lemans = !prof.lemans;
-  postProfile();
-});
-document.getElementById('btn-restart').addEventListener('click', async () => { await fetch('/api/restart', { method: 'POST' }); setTimeout(fetchState, 800); });
-document.getElementById('btn-stop').addEventListener('click', async () => { await fetch('/api/stop', { method: 'POST' }); setTimeout(fetchState, 400); });
+document.getElementById('lmu').addEventListener('click', () => { prof.lemans = !prof.lemans; if(!prof.lemans) prof.lemans_wide=false; postProfile(); });
+document.getElementById('lmuwide').addEventListener('click', (e) => { e.stopPropagation(); prof.lemans_wide = !prof.lemans_wide; postProfile(); });
+document.getElementById('btn-restart').addEventListener('click', async () => { await fetch('/api/restart', { method: 'POST' }); setTimeout(fetchState, 900); });
+document.getElementById('btn-stop').addEventListener('click', async () => { await fetch('/api/stop', { method: 'POST' }); setTimeout(fetchState, 500); });
+
+document.getElementById('btn-check').addEventListener('click', runCheck);
+async function runCheck() {
+  document.querySelectorAll('#checks .pill').forEach(p => { p.className = 'pill wait'; p.textContent = '…'; });
+  try {
+    const r = await fetch('/api/check'); const arr = await r.json();
+    (arr || []).forEach(x => {
+      const el = document.querySelector('#checks .pill[data-h="' + x.name + '"]');
+      if (!el) return;
+      if (x.ok) { el.className = 'pill ok'; el.textContent = x.latency_ms + ' мс'; }
+      else { el.className = 'pill bad'; el.textContent = 'нет связи'; }
+    });
+  } catch (e) {
+    document.querySelectorAll('#checks .pill').forEach(p => { p.className = 'pill bad'; p.textContent = 'ошибка'; });
+  }
+}
 
 async function loadLogs() {
   try {
     const r = await fetch('/api/logs'); const arr = await r.json();
+    lastLogs = arr || [];
     const el = document.getElementById('logs'); el.innerHTML = '';
-    (arr || []).slice().reverse().forEach(l => { const d = document.createElement('div'); d.textContent = l; el.appendChild(d); });
+    lastLogs.slice().reverse().forEach(l => { const d = document.createElement('div'); d.textContent = l; el.appendChild(d); });
   } catch (e) {}
 }
 
